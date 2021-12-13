@@ -6,7 +6,7 @@
 	let labels = []
 	
 	const width = 900
-	const height = 500
+	const height = 700
 	
 	onMount(async () => {
 		data = await d3.csv("./DataCorrelation.csv").then(d => {
@@ -19,10 +19,15 @@
 	})
 
 
-	const radius = 150
 	let rotateX = 0
 	let rotateY = 0
-	let rotate = 0
+	let rotate = Math.PI * 1.5
+	
+	let textReverseAngle = Math.PI/2
+	
+	const radius = 200
+
+	let textLabels = []
 	
 	let textMargin = 10
 	
@@ -32,16 +37,33 @@
 		.sortSubgroups(d3.descending)
 		.sortChords(d3.descending)
 		.padAngle(0.05)(data)
-
-	$: groups = chords.groups.map(group => {
+		
+	$: groups = chords.groups.map((group, index) => {
 		group.label = labels[group.index]
-		group.startAngle = Rad2Deg(group.startAngle)
-		group.endAngle = Rad2Deg(group.endAngle)
-		group.labelPosition = calcLabelPos(group.startAngle, group.endAngle)
-		group.labelRotation = group.labelPosition > 180 ? 180 : 0
+		group.startAngle = group.startAngle
+		group.endAngle = group.endAngle
+		group.labelPosition = (calcLabelPos(group.startAngle, group.endAngle) + rotate)  % (Math.PI * 2)
+
+		
+		group.textLabelReverse = group.labelPosition > Math.PI ? true : false
+		
+				
+		group.textLabel = textLabels[index]
+		group.textLabelLength = 0
+		
+		if(group.textLabel) {
+			group.textLabelLength = Math.max(...[...group.textLabel.children].map(el => el.textLength.baseVal.value))
+		}
+		
+		group.valueTextLabel = new Intl.NumberFormat("en-US", {
+			maximumSignificantDigits: 2
+		}).format(group.value)+" kt"
+		
+		// console.log(group.textLabel ? [group.textLabel.textLength, group.textLabel] : null)
 		
 		return group
 	})
+	
 	
 	$: yScale = d3.scaleBand()
 		.domain(data.map(d => d["Source"]))
@@ -56,8 +78,7 @@
 		return startAngle + sumAngle / 2
 	}
 	
-	function Rad2Deg(radians)
-	{
+	function Rad2Deg(radians) {
 	  var pi = Math.PI;
 	  return radians * (180/pi);
 	}
@@ -66,7 +87,7 @@
 
 <style>
 	path {
-		fill: grey;
+		fill: black;
 		opacity: 0.3
 	}
 	
@@ -77,30 +98,52 @@
 	text {
 		font-family: "SF Mono"
 	}
+	
+	.title {
+		font-weight: bold;
+	}
+	.value {
+		fill: #aaa;
+	}
 </style>
 
 <h1>DEMO</h1>
 
-<!-- <input type="range" bind:value="{rotateX}" min="-200" max="200">
-<input type="range" bind:value="{rotateY}" min="-200" max="200"> -->
-<input type="range" bind:value="{textMargin}" min="-200" max="200">
+<input type="range" bind:value="{textMargin}" min="-500" max="500">
+<input type="range" bind:value="{rotateY}" min="-500" max="500"> 
+<input type="range" bind:value="{rotate}" step="0.01" min="0" max="10">
+<pre>
+textMargin: {textMargin}
+rotateX: {rotateX}
+rotateY: {rotateY}
+rotate: {rotate} rad
+	
+</pre>
 
 <svg {width} {height}>
-	{console.log(groups)}
-	
-	<g transform="translate({width/2} {height/2}) rotate(270 -{radius/2} -{radius/2})">
-		{#each groups as group, i}
-			<text transform="rotate({group.labelPosition} -{radius} 0) translate({textMargin} 0)">
-				{group.label}
-			</text>
-		{/each}
-	</g>
-	
-	<g transform="translate({width/2} {height/2})">
-		{#each chords as entry, i}
-			<path d="{ribbonGenerator(entry)}">
-				
-			</path>
-		{/each}
-	</g>
+
+		<g transform="translate({width/2} {height/2}) rotate({-90} {rotateX} {rotateY})">
+			{#each groups as group, i}
+<!-- 			rotate({Rad2Deg(group.labelPosition)} -{radius} 0)  -->
+				<text 
+					bind:this="{textLabels[i]}"
+					text-anchor="{group.textLabelReverse ? 'end' : ''}" 
+					transform="
+						rotate({Rad2Deg(group.labelPosition)} 0 0) 
+						translate({textMargin + radius})
+						{group.textLabelReverse ? 'scale(-1 -1)' : ''}
+					"
+					>
+					<tspan class="title" x="0" y="0">{group.label}</tspan><tspan class="value" x="0" y="19">{group.valueTextLabel}</tspan>
+				</text>
+			{/each}
+		</g>
+		
+		<g transform="translate({width/2} {height/2}) rotate({Rad2Deg(rotate)} 0 0)" >
+			{#each chords as entry, i}
+				<path d="{ribbonGenerator(entry)}">
+					
+				</path>
+			{/each}
+		</g>
 </svg>
