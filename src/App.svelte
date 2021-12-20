@@ -1,149 +1,119 @@
 <script>
 	import * as d3 from 'd3'
 	import { onMount } from 'svelte'
+	import { tweened } from 'svelte/motion'
+	import { cubicOut } from 'svelte/easing'
 	
-	let data = []
-	let labels = []
-	
+	let data = null
+	let labelsX = []
+	let labelsY = []
+	let dataGroupedByValueColumn = []
 	const width = 900
 	const height = 700
-	
+	let temporalSlider = 0
+	let temporalData = []
+	let temporalDataKey
+	let tween = tweened()
+
 	onMount(async () => {
-		data = await d3.csv("./DataCorrelation.csv").then(d => {
+		data = await d3.csv("./summedDataFrame.csv").then(d => {
 			return d
 		})
+		dataGroupedByValueColumn = data.reduce(
+			(prevVal, currVal) => {	
+			if(!(currVal.valueColumn in prevVal)) {
+				prevVal[currVal.valueColumn] = []
+			}
+				prevVal[currVal.valueColumn].push(currVal)
 		
-		labels = data.map(obj => Object.values(obj)).map(arr => arr[0])
-		
-		data = data.map(obj => Object.values(obj)).map(arr => arr.splice(1)).map(arr => arr.map(val => parseFloat(val) || 0))
-	})
-
-
-	let rotateX = 0
-	let rotateY = 0
-	let rotate = Math.PI * 1.5
-	
-	let textReverseAngle = Math.PI/2
-	
-	const radius = 200
-
-	let textLabels = []
-	
-	let textMargin = 10
-	
-	const ribbonGenerator = d3.ribbon().radius(radius);
-	
-	$: chords = d3.chord()
-		.sortSubgroups(d3.descending)
-		.sortChords(d3.descending)
-		.padAngle(0.05)(data)
-		
-	$: groups = chords.groups.map((group, index) => {
-		group.label = labels[group.index]
-		group.startAngle = group.startAngle
-		group.endAngle = group.endAngle
-		group.labelPosition = (calcLabelPos(group.startAngle, group.endAngle) + rotate)  % (Math.PI * 2)
-
-		
-		group.textLabelReverse = group.labelPosition > Math.PI ? true : false
-		
+			return prevVal
+		}, {})	
 				
-		group.textLabel = textLabels[index]
-		group.textLabelLength = 0
 		
-		if(group.textLabel) {
-			group.textLabelLength = Math.max(...[...group.textLabel.children].map(el => el.textLength.baseVal.value))
-		}
+		labelsY = Object.values(dataGroupedByValueColumn)[0].map(row => {
+			return row[""]
+		}).sort()
 		
-		group.valueTextLabel = new Intl.NumberFormat("en-US", {
-			maximumSignificantDigits: 2
-		}).format(group.value)+" kt"
+		labelsX = Object.values(dataGroupedByValueColumn)[0].map(row => {
+			return Object.keys(row).filter(word => word !== "" && word !== "valueColumn").sort()
+		})[0]
 		
-		// console.log(group.textLabel ? [group.textLabel.textLength, group.textLabel] : null)
+		console.log(labelsX, labelsY)
 		
-		return group
+		Object.entries(dataGroupedByValueColumn).forEach(([key, values]) => {
+			
+			values = values.map(value => {
+				console.log(value)
+				return value
+			})
+			dataGroupedByValueColumn[key] = values.map(value => {
+				return labelsX.map(label => {
+					return parseFloat(value[label])
+				})
+			})
+			
+			// if(!(currVal.valueColumn in prevVal)) {
+			// 	prevVal[currVal.valueColumn] = []
+			// }
+			// prevVal[currVal.valueColumn].push(labels.map(label => parseFloat(currVal[label])))
+			// 
+			
+		})	
+		
+		console.log(dataGroupedByValueColumn)	
+		
+		// temporalData = Object.values(data)[temporalSlider]
+		// temporalDataKey = Object.keys(data)[temporalSlider]
+		
+		// tween = tweened(temporalData, {
+		// 	duration: 5000,
+		// 	easing: cubicOut
+		// })
+		
 	})
-	
-	
-	$: yScale = d3.scaleBand()
-		.domain(data.map(d => d["Source"]))
-		.range([0, height])
-		
-	$: xScale = d3.scaleLinear()
-		.domain([0, d3.max(data, d => parseFloat(d["2019"]))])
-		.range([0, width])
-	
-	function calcLabelPos(startAngle, endAngle) {
-		let sumAngle = endAngle - startAngle
-		return startAngle + sumAngle / 2
-	}
-	
-	function Rad2Deg(radians) {
-	  var pi = Math.PI;
-	  return radians * (180/pi);
-	}
-			  
+
+    $: temporalData = Object.values(data ?? {})[temporalSlider]
+	$: tween.set(temporalData)
+	$: temporalDataKey = Object.keys(data ?? {})[temporalSlider]
+
 </script>
 
 <style>
-	path {
-		fill: black;
-		opacity: 0.3
-	}
 	
-	path:hover {
-		opacity: 1
-	}
-	
-	text {
-		font-family: "SF Mono"
-	}
-	
-	.title {
-		font-weight: bold;
-	}
-	.value {
-		fill: #aaa;
-	}
 </style>
 
 <h1>DEMO</h1>
-
-<input type="range" bind:value="{textMargin}" min="-500" max="500">
-<input type="range" bind:value="{rotateY}" min="-500" max="500"> 
-<input type="range" bind:value="{rotate}" step="0.01" min="0" max="10">
 <pre>
-textMargin: {textMargin}
-rotateX: {rotateX}
-rotateY: {rotateY}
-rotate: {rotate} rad
-	
+	Year: {temporalDataKey} {temporalSlider}
+	<input type="range" bind:value="{temporalSlider}" step="1" min="0" max="{Object.keys(data ?? {}).length - 1}">
 </pre>
 
-<svg {width} {height}>
+<!-- <input type="range" bind:value="{textMargin}" min="-500" max="500">
+<input type="range" bind:value="{rotateY}" min="-500" max="500"> 
+<input type="range" bind:value="{rotate}" step="0.01" min="0" max="10"> -->
+<pre>
+<!-- textMargin: {textMargin}
+rotateX: {rotateX}
+rotateY: {rotateY}
+rotate: {rotate} rad -->
 
-		<g transform="translate({width/2} {height/2}) rotate({-90} {rotateX} {rotateY})">
-			{#each groups as group, i}
-<!-- 			rotate({Rad2Deg(group.labelPosition)} -{radius} 0)  -->
-				<text 
-					bind:this="{textLabels[i]}"
-					text-anchor="{group.textLabelReverse ? 'end' : ''}" 
-					transform="
-						rotate({Rad2Deg(group.labelPosition)} 0 0) 
-						translate({textMargin + radius})
-						{group.textLabelReverse ? 'scale(-1 -1)' : ''}
-					"
-					>
-					<tspan class="title" x="0" y="0">{group.label}</tspan><tspan class="value" x="0" y="19">{group.valueTextLabel}</tspan>
-				</text>
+<!-- {$tween} -->
+	
+{data}
+</pre>
+
+{#if data}
+
+<svg {width} {height}>
+	<g>
+			{#each $tween as row, x}
+				{#each row as val, y}
+					<text x="{x*70}" y="{y*30+20}">
+						{parseFloat(val).toFixed(1)}
+					</text>
+				{/each}
 			{/each}
-		</g>
 		
-		<g transform="translate({width/2} {height/2}) rotate({Rad2Deg(rotate)} 0 0)" >
-			{#each chords as entry, i}
-				<path d="{ribbonGenerator(entry)}">
-					
-				</path>
-			{/each}
-		</g>
+	</g>
 </svg>
+{/if}
