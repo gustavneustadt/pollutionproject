@@ -61,6 +61,8 @@
 			
 			return sorted
 		})
+		
+		console.log(pollutantsData, data)
 	
 	})
 	
@@ -92,16 +94,16 @@
 		}
 	})
 	
-	
+	$: console.log("poll vals:", pollutantValues)
 	$: xScale = d3.scaleLinear().domain([0, 100]).range([0, width - 210])
-	$: yScale = d3.scaleLinear().domain([-0.63, 0.1]).range([500, 0])
+	$: yScale = d3.scaleLinear().domain([-63, 10]).range([500, 0])
 	$: sizeScale = d3.scaleSqrt().domain([getMinValue(), getMaxValue()]).range([5, 80])
 	
 	$: console.log(getMinValue(), getMaxValue())
 	
 	const axisLabels = {
 		x: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-		y: [0.1, 0, -0.1, -0.2, -0.3, -0.4, -0.5]
+		y: [10, 0, -10, -20, -30, -40, -50]
 	}
 	
 	$: scales = {
@@ -329,7 +331,7 @@ text {
 						</g>
 					{/each}
 					
-					<text transform="rotate(-90) translate({yScale(-0.2) * -1}, -70)" text-anchor="middle">Change per year</text>
+					<text transform="rotate(-90) translate({yScale(40)}, -70)" text-anchor="middle">Change per year</text>
 					<text transform="translate({xScale(50)}, {yScale(maxLabel.yMin) + 60})" text-anchor="middle">Change to base year</text>
 					
 					<text class="trend" x="{xScale(maxLabel.xMax) + 10}" y="{yScale($meanTrend)}" alignment-baseline="central" text-anchor="left">Trend per year</text>

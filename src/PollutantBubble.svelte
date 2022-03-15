@@ -75,7 +75,7 @@
 	
 	function getPercentageChange(values, currentYear, currentValue) {
 		let prev = getPrevValue(values, currentYear)
-		return ((prev / currentValue) - 1) * -1
+		return ((prev / currentValue) - 1) * -100
 	}
 	
 	function sliceArray(array, start, number) {
