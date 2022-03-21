@@ -165,7 +165,7 @@
 	}
 	
 	text {
-		font-family: "Merriweather Sans";
+		font-family: "Fira Sans";
 		font-size: 1rem;
 		fill: var(--textColor);
 	}

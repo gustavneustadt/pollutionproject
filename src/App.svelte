@@ -1,8 +1,11 @@
 <script>
 	import * as d3 from 'd3'
 	import chroma from "chroma-js"
-	import { onMount, setContext } from 'svelte'
+	import { onMount, setContext, getContext } from 'svelte'
+	import { writable } from 'svelte/store'
 	import PollutantBubble from './PollutantBubble.svelte'
+	import PollutantSourceGroup from './PollutantSourceGroup.svelte'
+	import PollutantSources from './PollutantSources.svelte'
 	
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
@@ -11,25 +14,72 @@
 	
 	let pollutantsData = []
 	
+	let sourcesData
+	
+	let sourceGroupsData
+	let subSourcesData
+	let subSourcesPerSourceGroupData
+	let descriptionPerSubSourcesData
+	
+	
 
-		
+	const store = writable({
+		sourceGroups: null,
+		subSources: null,
+		subSourceDescriptions: null,
+		subSourcesPerSourceGroup: null,
+		years: [1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019],
+		pollutants: ["BC",		"CO", 		"NH3", 		"NMVOC", 	"NOx",		"PM10", 	"PM2.5",	"SO2",		"TSP"],
+		getYear: function(yearI) {
+			return this.years[yearI]	
+		},
+		getSubSourceDescription: function(subSourceCode) {
+			return this.subSourceDescriptions[subSourceCode]
+		},
+		getSourceGroupsOfYear: function(year = null) {
+			year = year ?? this.getYear(0)
+
+			return this.sourceGroups.map(([sourceGroupName, years]) => {
+				let pollutants = years.filter(([groupsYear, _]) => groupsYear == year)[0][1]
+				return [
+					sourceGroupName,
+					pollutants,
+					Object.values(pollutants).reduce((acc, curr) => acc + curr, 0)
+				]
+			})
+		},
+		getSubSourcesOfYear: function(year) {
+			
+		},
+		getSubSourcesOfSourceGroup: function(sourceGroupName) {
+			let subSourceCodes = this.subSourcesPerSourceGroup[sourceGroupName]
+			return [...this.subSources].filter(([key, _]) => subSourceCodes.includes(key))
+		},
+		getValuesOfYear: function(map, year) {
+			return map.find(([needleYear, _]) => needleYear == year)[1]
+		}
+	})
+	
+	setContext("store", store)
+	
 	const width = 800
 	const height = 1000
 	
-	var currentYear = 4
+	let initialized = false
 	
-	const pollutants = 		
-	["BC",		"CO", 		"NH3", 		"NMVOC", 	"NOx",		"PM10", 	"PM2.5",	"SO2",		"TSP"]
+	var currentYear = 0
+	
+	const pollutants = $store.pollutants
 	const pollutantColors = 
 	["#509CF7", "#FFCC00", 	"#5856D6", 	"#34C759", 	"#FF2D55",	"#AF52DE", 	"#FF9500",	"#37D2AC",	"#83DCFF"]
-	const years = [1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
+	const years = $store.years
 	const sources = ["Energy", "Industry", "Agriculture", "Waste"]
 	
-	let trendLineValues = pollutants.map(pollutant => {
+	let trendLineValues = pollutants.map(_ => {
 		return 0;
 	})
 	
-	let pollutantPositions = pollutants.map(pollutant => {
+	let pollutantPositions = pollutants.map(_ => {
 		return {
 			x: 0,
 			y: 0
@@ -46,11 +96,28 @@
 		meanTrend.set(cleanedTrendValues.reduce((acc, curr) => acc + curr)/cleanedTrendValues.length)
 	}
 
-	onMount(async () => {
-		data = await d3.csv("./SummedData.csv").then(d => {
-			return d
-		})
-
+	async function init() {
+		let reshapeGroupedItems = (groupedItemsArray) => {
+			return groupedItemsArray.map(([sourceGroupName, [...sourceGroupYears]]) => {
+				let yearData = sourceGroupYears.map(([year, data]) => {
+					let reshapedData = Object.fromEntries(
+						Object.entries(data[0]).filter(
+							([key, _]) => pollutants.includes(key)
+						).map(
+							([key, value]) => {
+							return [key, parseFloat(value)]
+						})
+					)
+					return [year, reshapedData]
+				})
+				
+				return [sourceGroupName, yearData]
+			})
+		}
+		
+		
+		data = await d3.csv("./pollutantsSum.csv")
+		
 		pollutantsData = pollutants.map(name => {
 			
 			let pollutantData = data.filter(d => {
@@ -62,8 +129,42 @@
 			return sorted
 		})
 		
-		console.log(pollutantsData, data)
-	
+		const fetchSourceGroupsSum = await d3.csv("./sourceGroupsSum.csv")
+		
+		const groupedSourceGroupsSum = [...d3.group(fetchSourceGroupsSum, d => d.index, d => d.year)]
+		
+		$store.sourceGroups = reshapeGroupedItems(groupedSourceGroupsSum)
+		
+		
+		const fetchSubSources = await d3.csv("./subSourcesSum.csv")
+		
+		const groupedSubSources = [...d3.group(fetchSubSources, d => d.code, d => d.year)]
+		
+		$store.subSources = reshapeGroupedItems(groupedSubSources)
+		
+		
+		const fetchSubSourceDescriptions = await d3.json("./subSourcesDescriptions.json").then(d => {
+			return Object.fromEntries(
+				Object.entries(d).map(([key, value]) => {
+					return [key, value[0]]
+				})
+			)
+		})
+		
+		$store.subSourceDescriptions = fetchSubSourceDescriptions
+		
+		
+		const fetchSubSourcesPerSourceGroup = await d3.json("./subSourcesPerSourceGroup.json")
+		
+		$store.subSourcesPerSourceGroup = fetchSubSourcesPerSourceGroup
+		
+		return 1
+	}
+
+	onMount(async () => {
+		await init().then(() => {
+			initialized = true
+		})
 	})
 	
 	$: getMaxValue = () => {
@@ -86,20 +187,17 @@
 		return Math.min(...pollutantMaxes)
 	}
 	
-	$: pollutantValues = pollutants.map((name, i) => {
+	$: pollutantValues = pollutants.map((_, i) => {
 		if(pollutantsData.length > 0) {
-			return years.map((yearNumber, y) => {
+			return years.map((_, y) => {
 				return Number(pollutantsData[i][y])
 			})				
 		}
 	})
-	
-	$: console.log("poll vals:", pollutantValues)
+
 	$: xScale = d3.scaleLinear().domain([0, 100]).range([0, width - 210])
 	$: yScale = d3.scaleLinear().domain([-63, 10]).range([500, 0])
 	$: sizeScale = d3.scaleSqrt().domain([getMinValue(), getMaxValue()]).range([5, 80])
-	
-	$: console.log(getMinValue(), getMaxValue())
 	
 	const axisLabels = {
 		x: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
@@ -123,7 +221,11 @@
 		return array.reduce((a, b) => parseFloat(a) + parseFloat(b), 0.0)
 	}
 	
-	const niceNumbers = new Intl.NumberFormat("en-US")
+	function niceNumbers(number) {
+		let string = new Intl.NumberFormat("en-US").format(number)
+		
+		return string.replace("-", "–")
+	}
 
 	
 	$: getOrderedPollutants = () => {
@@ -238,13 +340,16 @@
 </script>
 
 <style>
+* {
+	font-family: "Fira Sans";
+}
 .axis-grid--horizontal, .axis-grid--vertical {
 	stroke: #f4f4f4;
 }
 
 text {
-	fill: #d0d0d0;
-	font-family: "Merriweather";
+/* 	fill: #d0d0d0; */
+/* 	font-family: "Merriweather"; */
 	font-weight: 200;
 	font-size: 0.8rem;
 }
@@ -280,28 +385,18 @@ text {
 	display: flex
 }
 
-.pollutant-information {
-	font-family: "Merriweather";
-	font-size: .9rem;
-	line-height: 1.6;
-	width: 25rem;
-	background: #F6F6F6;
-	padding: 1rem;
+svg {
+	width: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	
 }
-
-.pollutant-information p {
-	margin: 1rem 0 2.5rem;
+.graph-wrapper {
+	width: 100%;
+	height: 100rem;
+	position: relative;
 }
-
-.pollutant-information h1 {
-	font-size: 1.5rem;
-}
-
-.pollutant-information h2 {
-	font-size: 1.1rem;
-	margin: 1rem 0 .5rem;
-}
-
 </style>
 
 <h1>DEMO</h1>
@@ -316,22 +411,13 @@ text {
 <div class="flex">
 	<div class="graph-wrapper">
 		
-		{#if pollutantsData.length > 0}
-			<svg {width} {height}>
+		{#if initialized}
+			<svg viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
 				<g transform="translate(100, 40)">
-					{#each sources as source, i}
-						{#each pollutantPositions as connection, j}
-							<path class="connection" d={getConnection(connection, getPollutantConnectionPoint(i, j))}></path>
-						{/each}
-						<g transform="translate({getSourcePosition(i).x}, {getSourcePosition(i).y})">
-							<rect class="source__block" x="5" width="{xScale(maxLabel.xMax / sources.length) - 10}" height="20" rx="2" />
-							<text class="source__name" y="10" x="{xScale((maxLabel.xMax / sources.length) / 2)}" alignment-baseline="central" text-anchor="middle">
-								{source}
-							</text>
-						</g>
-					{/each}
+
+					<PollutantSources year={years[currentYear]} xScale={xScale}/>					
 					
-					<text transform="rotate(-90) translate({yScale(40)}, -70)" text-anchor="middle">Change per year</text>
+					<text transform="rotate(-90) translate({yScale(40)}, -70)" text-anchor="middle">Change to previous year</text>
 					<text transform="translate({xScale(50)}, {yScale(maxLabel.yMin) + 60})" text-anchor="middle">Change to base year</text>
 					
 					<text class="trend" x="{xScale(maxLabel.xMax) + 10}" y="{yScale($meanTrend)}" alignment-baseline="central" text-anchor="left">Trend per year</text>
@@ -339,11 +425,11 @@ text {
 					<line class="axis-grid--horizontal trend" x1="{xScale(maxLabel.xMin)}" y1="{yScale($meanTrend)}" x2="{xScale(maxLabel.xMax)}" y2="{yScale($meanTrend)}"></line>
 				{#each axisLabels.y as label}
 					<line class="axis-grid--horizontal {label == 0 ? 'zero' : ''}" x1="{xScale(0)}" y1="{yScale(label)}" x2="{xScale(maxLabel.xMax)}" y2="{yScale(label)}"></line>
-					<text class="axis-label--horizontal" x="-10" y="{yScale(label)}" text-anchor="end" alignment-baseline="central">{niceNumbers.format(label)} %</text>
+					<text class="axis-label--horizontal" x="-10" y="{yScale(label)}" text-anchor="end" alignment-baseline="central">{niceNumbers(label)} %</text>
 				{/each}
 				{#each axisLabels.x as label}
 					<line class="axis-grid--vertical" x1="{xScale(label)}" y1="{yScale(maxLabel.yMax)}" x2="{xScale(label)}" y2="{yScale(maxLabel.yMin)}"></line>
-					<text class="axis-label--vertical" x="{xScale(label)}" y="{yScale(maxLabel.yMin) + 20}" text-anchor="middle">{niceNumbers.format(label)} %</text>
+					<text class="axis-label--vertical" x="{xScale(label)}" y="{yScale(maxLabel.yMin) + 20}" text-anchor="middle">{niceNumbers(label)} %</text>
 				{/each}
 				
 				{#each getOrderedPollutants() as pollutant, i}
@@ -360,25 +446,4 @@ text {
 		</svg>
 		{/if}
 	</div>
-
-<div class="pollutant-information">
-	<h1>PM 2.5</h1>
-	<p>
-		It can be caused by human activity: Particulate matter can originate from energy supply and industrial processes, metal and steel production as well as the reloading of bulk material or it can be of natural origin, for example as a result of soil erosion. In agglomerations road traffic is the dominant source.
-	</p>
-	<h2>
-		Health risk
-	</h2>
-	<p>
-		Research studies of the World Health Organisation (WHO) have shown increased occurrence of respiratory and cardiovascular diseases at high particulate matter concentrations. Persons with pre-existing disease are especially vulnerable. Studies have shown a measurable reduction in life expectancy with increasing particulate matter concentrations.
-	</p>
-	<h2>
-		Limit values
-	</h2>
-	<p>
-		Since 1 January 2005 limit values for particulate matter (PM10) for protection of human health are put into force. The daily limit value is 50 µg/m3, not to be exceeded more than 35 times per calendar year. The permitted annual limit value is 40 µg/m3. Information on ambient concentrations of particulate matter and exceedances must be made available to the public as promptly as possible.
-	</p>
-	
-	<a class="information-source">German Federal Environmental Agency →</a>
-</div>
 </div>
