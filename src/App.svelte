@@ -6,6 +6,8 @@
 	import PollutantBubble from './PollutantBubble.svelte'
 	import PollutantSourceGroup from './PollutantSourceGroup.svelte'
 	import PollutantSources from './PollutantSources.svelte'
+	import Header from './Header.svelte'
+	
 	
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
@@ -29,16 +31,26 @@
 		subSourceDescriptions: null,
 		subSourcesPerSourceGroup: null,
 		years: [1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019],
+		getMinYear: function() {
+			return Math.min(...this.years)	
+		},
+		getMaxYear: function() {
+			return Math.max(...this.years)	
+		},
 		pollutants: ["BC",		"CO", 		"NH3", 		"NMVOC", 	"NOx",		"PM10", 	"PM2.5",	"SO2",		"TSP"],
-		getYear: function(yearI) {
-			return this.years[yearI]	
+		getYear: function(yearIndex) {
+			return this.years[yearIndex]	
+		},
+		niceNumbers: function(number) {
+			let string = new Intl.NumberFormat("en-US").format(number)
+			
+			return string.replace("-", "–")
 		},
 		getSubSourceDescription: function(subSourceCode) {
 			return this.subSourceDescriptions[subSourceCode]
 		},
 		getSourceGroupsOfYear: function(year = null) {
 			year = year ?? this.getYear(0)
-
 			return this.sourceGroups.map(([sourceGroupName, years]) => {
 				let pollutants = years.filter(([groupsYear, _]) => groupsYear == year)[0][1]
 				return [
@@ -195,7 +207,7 @@
 		}
 	})
 
-	$: xScale = d3.scaleLinear().domain([0, 100]).range([0, width - 210])
+	$: xScale = d3.scaleLinear().domain([100, 0]).range([0, width - 210])
 	$: yScale = d3.scaleLinear().domain([-63, 10]).range([500, 0])
 	$: sizeScale = d3.scaleSqrt().domain([getMinValue(), getMaxValue()]).range([5, 80])
 	
@@ -221,11 +233,7 @@
 		return array.reduce((a, b) => parseFloat(a) + parseFloat(b), 0.0)
 	}
 	
-	function niceNumbers(number) {
-		let string = new Intl.NumberFormat("en-US").format(number)
-		
-		return string.replace("-", "–")
-	}
+   	const niceNumbers = $store.niceNumbers
 
 	
 	$: getOrderedPollutants = () => {
@@ -397,28 +405,50 @@ svg {
 	height: 100rem;
 	position: relative;
 }
+header {
+	position: fixed;
+	top: 0;
+	width: 100%;
+	left: 0;
+	z-index: 100;
+	background: white;
+}
+
+
 </style>
 
-<h1>DEMO</h1>
+<h1>
+	Air Pollution in Germany 1990 – 2019
+</h1>
+<div class="title-subline">
+	Vizualizing Air Pollution Data reported from the European Environment Agency.
+	Report
+	Data from 1990 to 2019
+</div>
 
+<p>
+	
+</p>
 
-<input type="range" min="0" max="{years.length-1}" bind:value="{currentYear}">
-
-<pre>
-	{years[currentYear]}
-</pre>
-
+{#if initialized}
+	<Header bind:currentYearIndex={currentYear} />
+{/if}
 <div class="flex">
 	<div class="graph-wrapper">
 		
 		{#if initialized}
 			<svg viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
 				<g transform="translate(100, 40)">
-
-					<PollutantSources year={years[currentYear]} xScale={xScale}/>					
+					<g transform="translate(0, {yScale(-50) + 100})">
+						<PollutantSources year={years[currentYear]} xScale={xScale}/>			
+							
+						{#each axisLabels.x as label}
+							<line class="axis-grid--vertical" x1="{xScale(label)}" y1="-70" x2="{xScale(label)}" y2="0"></line>
+						{/each}		
+					</g>
 					
 					<text transform="rotate(-90) translate({yScale(40)}, -70)" text-anchor="middle">Change to previous year</text>
-					<text transform="translate({xScale(50)}, {yScale(maxLabel.yMin) + 60})" text-anchor="middle">Change to base year</text>
+					<text transform="translate({xScale(50)}, {yScale(maxLabel.yMin) + 60})" text-anchor="middle">Compared to base year</text>
 					
 					<text class="trend" x="{xScale(maxLabel.xMax) + 10}" y="{yScale($meanTrend)}" alignment-baseline="central" text-anchor="left">Trend per year</text>
 					
