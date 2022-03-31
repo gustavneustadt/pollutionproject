@@ -6,6 +6,7 @@ html, body {
 
 body {
 	--colorText: #002b21;
+	/* --colorTextLighten: #0f4d3e; */
 	--colorTextMuted: #87a69d;
 	--colorTextMutedLight: #e7f3ef;
 	--colorTextEm: #114e3e;
@@ -13,6 +14,7 @@ body {
 	--colorBorder: #9cccc0;
 	--colorPrimaryGreyish: #e7f3ef;
 	--colorBackground: #eafff8;
+	--colorBackgroundDark: #ccf3e5;
 	--colorBackgroundLight: #f4fffb;
 	
 	background: var(--colorBackground);

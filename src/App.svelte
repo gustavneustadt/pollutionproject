@@ -70,13 +70,18 @@
 		},
 		getSourceGroupsOfYear: function(year = null) {
 			year = year ?? this.getYear(0)
-			return this.sourceGroups.map(([sourceGroupName, years]) => {
-				let pollutants = years.filter(([groupsYear, _]) => groupsYear == year)[0][1]
+			return this.getSourcesOfYear(this.sourceGroups, year)
+		},
+		getSourcesOfYear: function(collection, year) {
+			return collection.map(([itemName, years]) => {
+				let pollutants = years.filter(([groupYear, _]) => groupYear == year)[0][1]
+				
 				return [
-					sourceGroupName,
+					itemName,
 					pollutants,
 					Object.values(pollutants).reduce((acc, curr) => acc + curr, 0)
 				]
+				
 			})
 		},
 		getSubSourcesOfYear: function(year) {
@@ -84,6 +89,9 @@
 		},
 		getSubSourcesOfSourceGroup: function(sourceGroupName) {
 			let subSourceCodes = this.subSourcesPerSourceGroup[sourceGroupName]
+			if(!subSourceCodes) {
+				return []
+			}
 			return [...this.subSources].filter(([key, _]) => subSourceCodes.includes(key))
 		},
 		getValuesOfYear: function(map, year) {
