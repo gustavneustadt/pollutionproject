@@ -15,26 +15,32 @@
 
 <style>
 	header {
-		position:sticky;
+		/* position:sticky; */
 		width: 100%;
 		top: 0;
 		left: 0;
 		z-index: 100;
-		background: white;
-		border-bottom: 2px solid #cecece;
+		background: var(--colorBackground);
+		border-bottom: 2px solid var(--colorBorder);
+		height: 6rem;
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
 	}
 	.total-tons-base, .total-tons, .current-year {
 		font-variant-numeric: tabular-nums;
 		text-align: right;
 	}
 	.total-tons-base, .total-tons {
-		font-weight: 700;
+		/* font-weight: 700; */
+		color: var(--colorTextMuted);
 	}
 	.total-tons.base {
-		color: #959595;
-	}
-	.total-tons {
-		height: 1rem;
+		color: var(--colorTextMuted);
+		/* height: .9rem; */
+		font-size: .9rem;
+		position: relative;
+		bottom: 2px;
 	}
 	
 	.year-slider {
@@ -42,17 +48,19 @@
 		
 		margin: 0;
 		padding: 0;
-		width: 100%; 	}
+		width: 100%; 	
+	}
 	
 	.wrapper {
 		display: flex;
 		align-items: baseline;
 		justify-content: center;
 		gap: 1rem;
-		padding: 3rem 1rem .5rem;
+		padding: 0 0 .5rem;
 	}
 	.slider-wrapper {
-		width: 50%;
+		width: 30rem;
+		/* max-width: 30rem; */
 		position: relative;
 	}
 	
@@ -65,20 +73,28 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		font-size: 1.3rem;	
+		font-size: .9rem;	
 		left: var(--leftMargin);
+	}
+	
+	.slider-wrapper .year {
+		font-size: 1.2rem;
+		color: var(--colorPrimary);
 	}
 	
 	input[type="range"]::-webkit-slider-thumb, input::-moz-range-thumb, input::-ms-thumb {
 		/* -webkit-appearance: none; */
-		background-color: #666;
+		/* background-color: #666; */
+		background: var(--colorPrimary);
 		/* width: 10px; */
 		/* height: 20px; */
 	 }
 	 
 	span.year {
-		font-size: 1rem;
-		font-weight: 400;
+		/* color: var(--colorPrimary); */
+		/* font-size: 1.2rem; */
+		font-weight: 700;
+		/* color: var(--colorTextMuted); */
 	}
 	
 	.total-tons.hide {
@@ -89,13 +105,14 @@
 		position: relative;
 		margin: .5rem;
 		box-sizing: border-box;
+		bottom: -1.5rem;
 	}
 	
 </style>
 <header>
 	<div class="wrapper">
-		<div class="total-tons"
-		class:base={currentYear != $store.getMinYear()}>
+		<div class="total-tons base">
+
 				{$store.niceNumbers(totalPollutionAmountBaseYear.toFixed(0))} kt
 				<span class="year">
 					{$store.getYear(0)}
@@ -106,24 +123,22 @@
 				<div class="total-tons" 
 					style="--leftMargin: {sliderProgress}%"
 				>
-					{$store.niceNumbers(totalPollutionAmount.toFixed(0))} kt
 					<span class="year">
 						{currentYear}
 					</span>
+					{$store.niceNumbers(totalPollutionAmount.toFixed(0))} kt
 				</div>
 				
 			</div>
 			<input class="year-slider" type="range" bind:value={currentYearIndex} min="0" max="{maxYearIndex}"/>
 		</div>
-		<div class="total-tons"
-		class:base={currentYear != $store.getMaxYear()}
+		<div class="total-tons base"
+
 		>
 				<span class="year">
 					{$store.getMaxYear()}
 				</span>
 				{$store.niceNumbers(maxYearPollutionAmount.toFixed(0))} kt
 		</div>
-	</div>
-	<div>
 	</div>
 </header>

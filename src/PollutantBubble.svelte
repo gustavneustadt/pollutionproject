@@ -10,7 +10,7 @@
 	export let pollutant 
 	export let year
 	let scales = pollutant.scale
-	export let activeCluster
+	export let activePollutant
 	export let trend
 	
 	export let pollutantPosition
@@ -83,14 +83,14 @@
 		}
 	}
 	
-	function getFirstYearIndex() {
-		let index = pollutant.values.findIndex(([_, amount]) => amount > 0)
+	function getFirstYearIndex(values) {
+		let index = values.findIndex(([_, amount]) => amount > 0)
 		
 		return index ?? 0
 	}
 	
-	function getFirstYear() {
-		let year = pollutant.values.find(([_, amount]) => amount > 0)
+	function getFirstYear(values) {
+		let year = values.find(([_, amount]) => amount > 0)
 		
 		return year ? year[0] : null
 	}
@@ -144,7 +144,7 @@
 	
 	function calcPosition(year = -1) {
 		// if the year is 0 or start of the pollutant => change is 0
-		let firstYear = getFirstYear()
+		let firstYear = getFirstYear(pollutant.values)
 		
 		if(firstYear >= year) {
 			return {
@@ -185,31 +185,31 @@
 	
 	$: textPos = {
 		x: 0,
-		y: $size < 30 ? -$size - 10 : 8
+		y: $size < 30 ? -$size - 10 : 6
 	}
 
 
 	function activate() {
 		if(isActive) {
-			activeCluster = null
+			activePollutant = null
 			return
 		}
-		activeCluster = pollutant.name
+		activePollutant = pollutant.name
 		d3.select(element).raise()
 	}
-	$: isActive = activeCluster == pollutant.name
-	$: someActive = activeCluster != null
+	$: isActive = activePollutant == pollutant.name
+	$: someActive = activePollutant != null
 	
 	
 	let linePathLabels = {
 		"BC": [2003, 2009, 2018, 2014],
-		"CO": [1991, 1994, 1998, 2003, 2009, 2019],
+		"CO": [1994, 1998, 2003, 2009, 2019],
 		"NH3": [1991, 2019],
 		"NMVOC": [1991, 1994, 2000, 2003, 2009, 2019],
 		"NOx": [1991, 1994, 2000, 2009, 2019],
 		"PM10": [1996, 2001, 2005, 2009],
 		"PM2.5": [1996, 2001, 2005, 2009, 2016],
-		"SO2": [1991, 1995, 1998, 2009],
+		"SO2": [1991, 1995, 1998, 2009, 2019],
 		"TSP": [1991, 1995, 2001, 2009]
 	}
 </script>
@@ -231,7 +231,6 @@
 	}
 	
 	text {
-		font-family: "Fira Sans";
 		font-size: 1rem;
 		fill: var(--textColor);
 	}
@@ -243,7 +242,7 @@
 	.pollutant--percentage {
 		font-size: .8rem;
 		font-weight: 300;
-		font-variant-numeric: oldstyle-nums;
+		font-variant-numeric: oldstyle-nums tabular-nums;
 	}
 	.bubble {
 		cursor: pointer;
@@ -297,7 +296,7 @@ class:active={isActive}
 class:hide={!isActive && someActive}
 transform="translate({$pos.x}, {$pos.y})" opacity={$opacity}
 bind:this={element}
-on:click={() => activate()}
+on:click|stopPropagation={() => activate()}
 >
 	<circle cx="0" cy="0" r="{$size}" class="size"></circle>
 	<circle cx="0" cy="0" r="{scales.size(baseValue)}" stroke-dasharray="5,10" on:click={clickEvent} class="base-size"></circle>

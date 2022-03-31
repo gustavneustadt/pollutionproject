@@ -5,26 +5,48 @@ html, body {
 }
 
 body {
-	color: #333;
+	--colorText: #002b21;
+	--colorTextMuted: #87a69d;
+	--colorTextMutedLight: #e7f3ef;
+	--colorTextEm: #114e3e;
+	--colorPrimary: #009c73;
+	--colorBorder: #9cccc0;
+	--colorPrimaryGreyish: #e7f3ef;
+	--colorBackground: #eafff8;
+	--colorBackgroundLight: #f4fffb;
+	
+	background: var(--colorBackground);
+	color: var(--colorText);
 	margin: 0;
-	padding: 8px;
+	padding: 0;
+	position: relative;
 	box-sizing: border-box;
-	font-family: "Fira Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	font-family: "TheMix", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 a {
-	color: rgb(0,100,200);
-	text-decoration: none;
+	color: var(--colorTextEm);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	text-decoration-color:  var(--colorBorder);
+	position: relative;
 }
 
 a:hover {
-	text-decoration: underline;
+	color: var(--colorPrimary);
 }
 
 a:visited {
-	color: rgb(0,80,160);
+	color: var(--colorPrimary);
 }
 
 label {
 	display: block;
 }
+svg text{
+   -webkit-user-select: none;
+   -moz-user-select: none;
+   -ms-user-select: none;
+   user-select: none;
+}
+

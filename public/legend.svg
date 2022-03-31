@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="2006px" height="964px" viewBox="0 0 2006 964" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Group 2</title>
+    <defs>
+        <path d="M482,964 C748.201249,964 964,748.201249 964,482 C964,215.798751 748.201249,0 482,0 C215.798751,0 0,215.798751 0,482 C0,748.201249 215.798751,964 482,964 Z" id="path-1"></path>
+        <mask id="mask-2" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="964" height="964" fill="white">
+            <use xlink:href="#path-1"></use>
+        </mask>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Artboard" transform="translate(-1282.000000, -586.000000)">
+            <g id="Group-2" transform="translate(1282.000000, 586.000000)">
+                <circle id="Oval" stroke="#ABC4BD" stroke-width="16" fill-opacity="0.240821678" fill="#87A69D" cx="482" cy="482" r="301"></circle>
+                <use id="Oval-Copy" stroke="#ABC4BD" mask="url(#mask-2)" stroke-width="14" stroke-dasharray="37,49" xlink:href="#path-1"></use>
+                <text id="Pollutant" font-family="TheMix-SemiBold, TheMix" font-size="74" font-weight="500" letter-spacing="12.663636" fill="#87A69D">
+                    <tspan x="233.433276" y="511.5">POLLUTANT</tspan>
+                </text>
+                <text id="Selected-year-pollut" font-family="TheMix-BoldItalic, TheMix" font-size="95" font-style="italic" font-weight="bold" fill="#87A69D">
+                    <tspan x="1091" y="518.127025">Selected year </tspan>
+                    <tspan x="1091" y="641.127025" font-family="TheMix-Plain, TheMix" font-weight="normal">pollution amount</tspan>
+                </text>
+                <text id="Base-year-pollution" font-family="TheMix-BoldItalic, TheMix" font-size="95" font-style="italic" font-weight="bold" fill="#87A69D">
+                    <tspan x="1091" y="126.247025">Base year </tspan>
+                    <tspan x="1091" y="249.247025" font-family="TheMix-Plain, TheMix" font-weight="normal">pollution amount</tspan>
+                </text>
+                <text id="Percentage-differenc" font-family="TheMix-Plain, TheMix" font-size="95" font-weight="normal" fill="#87A69D">
+                    <tspan x="1091" y="899.007025">Percentage difference</tspan>
+                </text>
+                <text id="52-%" font-family="TheMix-Bold, TheMix" font-size="59" font-weight="bold" letter-spacing="2.68181818" fill="#87A69D">
+                    <tspan x="416.5" y="884">52 %</tspan>
+                </text>
+                <g id="Group" transform="translate(933.500000, 92.247025) scale(-1, 1) translate(-933.500000, -92.247025) translate(825.000000, 61.747025)" stroke="#ABC4BD" stroke-width="7">
+                    <line x1="0" y1="30.5" x2="217" y2="30.5" id="Path-45"></line>
+                    <polyline id="Path-46" points="171 0 217 30.5 171 61"></polyline>
+                </g>
+                <g id="Group-Copy-2" transform="translate(811.500000, 864.500000) scale(-1, 1) translate(-811.500000, -864.500000) translate(581.000000, 834.000000)" stroke="#ABC4BD" stroke-width="7">
+                    <line x1="0" y1="30.5" x2="461" y2="30.5" id="Path-45"></line>
+                    <polyline id="Path-46" points="415 0 461 30.5 415 61"></polyline>
+                </g>
+                <g id="Group-Copy" transform="translate(941.000000, 487.000000) scale(-1, 1) translate(-941.000000, -487.000000) translate(840.000000, 456.500000)" stroke="#ABC4BD" stroke-width="7">
+                    <line x1="0" y1="30.5" x2="202" y2="30.5" id="Path-45"></line>
+                    <polyline id="Path-46" points="156 0 202 30.5 156 61"></polyline>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

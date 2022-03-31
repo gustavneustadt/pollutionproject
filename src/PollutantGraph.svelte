@@ -2,11 +2,13 @@
 	import * as d3 from 'd3'
 	import chroma from "chroma-js"
 	import { onMount, getContext } from 'svelte'
-
+	
+	import SourceGraph from './SourceGraph.svelte'
 	import PollutantBubble from './PollutantBubble.svelte'
 	import PollutantSourceGroup from './PollutantSourceGroup.svelte'
 	import PollutantSources from './PollutantSources.svelte'
-	
+	import PollutantInfoPanel from './PollutantInfoPanel.svelte'
+
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
 	
@@ -17,7 +19,6 @@
 
 	
 	let pollutantsData = $store.pollutants
-	console.log(pollutantsData)
 	
 	let sourcesData
 	
@@ -26,7 +27,7 @@
 
 	
 	const width = 800
-	const height = 1000
+	const height = 600
 	
 	let initialized = false
 	
@@ -37,7 +38,7 @@
 	["#509CF7", "#FFCC00", 	"#5856D6", 	"#34C759", 	"#FF2D55",	"#AF52DE", 	"#FF9500",	"#37D2AC",	"#83DCFF"]
 	const years = $store.years
 	
-	let activeCluster = null
+	let activePollutant = null
 	
 	let trendLineValues = pollutants.map(_ => {
 		return []
@@ -126,7 +127,7 @@
 		}
 	})
 	
-	$: xScale = d3.scaleLinear().domain([100, 0]).range([0, width - 210])
+	$: xScale = d3.scaleLinear().domain([100, 0]).range([0, width - 120])
 	$: yScale = d3.scaleLinear().domain([-63, 10]).range([500, 0])
 	$: sizeScale = d3.scaleSqrt().domain([getMinValue(), getMaxValue()]).range([5, 80])
 	$: colorScale = d3.scaleOrdinal()
@@ -179,31 +180,33 @@
 
 <style>
 	.axis-grid--horizontal, .axis-grid--vertical {
-		stroke: #f4f4f4;
+		stroke: var(--colorPrimaryGreyish);
 	}
 	
 	.axis-label {
 		font-variant-numeric: tabular-nums;
 		font-weight: 400;
-		fill: #ababab;
-		font-size: .6rem;
+		fill: var(--colorTextMuted);
+		font-size: .8rem;
 	}
 	
 	.axis-title {
+		font-size: 1rem;
 		font-weight: 400;
 		font-feature-settings: "smcp";
 		letter-spacing: .04rem;
+		fill: var(--colorTextMuted);
 	}
 	
-	text {
-	/* 	fill: #d0d0d0; */
+	.graph text {
 	/* 	font-family: "Merriweather"; */
-		font-weight: 200;
+		font-weight: 400;
 		font-size: 0.8rem;
 	}
 	
 	.axis-grid--horizontal.zero {
-		stroke: #d9d9d9;
+		stroke: var(--colorTextMuted);
+		
 	}
 	
 	.axis-grid--horizontal.trend {
@@ -230,80 +233,104 @@
 	}
 	
 	.flex {
-		display: flex
+		display: flex;
 	}
 	
 	svg {
 		width: 100%;
-		position: absolute;
 		top: 0;
 		left: 0;
 		
 	}
 	.graph-wrapper {
-		width: 100%;
-		height: 100rem;
+		width: 70%;
+		max-width: 65rem;
+		height: 100%;
 		position: relative;
 	}
 	.trend-line {
-		stroke: #f0f0f0;
+		stroke: var(--colorTextMutedLight);
 		fill: none;
 		stroke-width: 3px;
 	}
 	.trend-label {
-		font-weight: 600;
-		fill: #d9d9d9;
+		font-weight: 700;
+		fill: var(--colorTextMuted);
 		font-size: .8rem;
 	}
 	
 	.trend-label-title {
 		font-weight: 400;
-		fill: #d9d9d9;
+		fill: var(--colorTextMuted);
 		font-size: .8rem;
 	}
 
+	.wrapper {
+		display: flex;
+		align-content: stretch;
+		justify-content: space-between;
+	}
+	
+	.legend {
+		width: 30%;
+		margin: 1rem 0 0 10%;
+	}
+	h2 {
+		margin: 4rem 0 0rem 12.5%;
+		color: var(--colorTextMuted);
+	}
 </style>
 
-<div class="graph-wrapper">
-		<svg viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
-			<g transform="translate(100, 40)">
-				
-				<path class="trend-line" d="{linePath}" />
-				<!-- {console.log(trendLabelsCoords)} -->
-				
-				<text class="axis-title" transform="rotate(-90) translate({yScale(40)}, -70)" text-anchor="middle">change to previous year</text>
-				<text class="axis-title" transform="translate({xScale(50)}, {yScale(maxLabel.yMin) + 60})" text-anchor="middle">compared to base year</text>
 
-			{#each axisLabels.y as label}
-				<line class="axis-grid--horizontal {label == 0 ? 'zero' : ''}" x1="{xScale(0)}" y1="{yScale(label)}" x2="{xScale(maxLabel.xMax)}" y2="{yScale(label)}"></line>
-				<text class="axis-label axis-label--horizontal" x="-10" y="{yScale(label)}" text-anchor="end" alignment-baseline="central">{niceNumbers(label)} %</text>
-			{/each}
-			{#each axisLabels.x as label}
-				<line class="axis-grid--vertical" x1="{xScale(label)}" y1="{yScale(maxLabel.yMax)}" x2="{xScale(label)}" y2="{yScale(maxLabel.yMin)}"></line>
-				<text class="axis-label axis-label--vertical" x="{xScale(label)}" y="{yScale(maxLabel.yMin) + 20}" text-anchor="middle">{niceNumbers(label)} %</text>
-			{/each}
-			
-			
-			{#each trendLabelsCoords as year, i}
-			
-				<g transform="translate({year[1][0]},{year[1][1]})" >
-
-					{#if i == 0}
-						<text class="trend-label-title" transform="translate(0, 40)" text-anchor="middle">Average trend</text>
-					{/if}
+<div class="wrapper">
+	<div class="graph-wrapper" on:click={() => {activePollutant = null}}>
+		<h2>Annual Air Emissions of Germany</h2>
+			<svg class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
+				<g transform="translate(100, 40)">
 					
-					<text class="trend-label" transform="translate(0, 20)" text-anchor="middle">{year[0]}</text>
-				</g>
-			{/each}
-			{#each pollutantsComponentData as pollutant, i}
-					<PollutantBubble
-						bind:activeCluster="{activeCluster}"
-						year={currentYear} 
-						bind:pollutantPosition={pollutantPositions[i]}
-						bind:trend={trendLineValues[i]}
-						pollutant={pollutant}
-					></PollutantBubble>
-			{/each}
-		</g>
-	</svg>
+					<path class="trend-line" d="{linePath}" />
+					<!-- {console.log(trendLabelsCoords)} -->
+					
+					<text class="axis-title" transform="rotate(-90) translate({yScale(40)}, -70)" text-anchor="middle">change to previous year</text>
+					<text class="axis-title" transform="translate({xScale(50)}, {yScale(maxLabel.yMin) + 60})" text-anchor="middle">compared to base year</text>
+	
+				{#each axisLabels.x as label}
+					<line class="axis-grid--vertical" x1="{xScale(label)}" y1="{yScale(maxLabel.yMax)}" x2="{xScale(label)}" y2="{yScale(maxLabel.yMin)}"></line>
+					<text class="axis-label axis-label--vertical" x="{xScale(label)}" y="{yScale(maxLabel.yMin) + 20}" text-anchor="middle">{niceNumbers(label)} %</text>
+				{/each}
+				{#each axisLabels.y as label}
+					<line class="axis-grid--horizontal {label == 0 ? 'zero' : ''}" x1="{xScale(0)}" y1="{yScale(label)}" x2="{xScale(maxLabel.xMax)}" y2="{yScale(label)}"></line>
+					<text class="axis-label axis-label--horizontal" x="-10" y="{yScale(label)}" text-anchor="end" alignment-baseline="central">{niceNumbers(label)} %</text>
+				{/each}
+				
+				
+				{#each trendLabelsCoords as year, i}
+				
+					<g transform="translate({year[1][0]},{year[1][1]})" >
+	
+						{#if i == 0}
+							<text class="trend-label-title" transform="translate(0, 40)" text-anchor="middle">Average trend</text>
+						{/if}
+						
+						<text class="trend-label" transform="translate(0, 20)" text-anchor="middle">{year[0]}</text>
+					</g>
+				{/each}
+				{#each pollutantsComponentData as pollutant, i}
+						<PollutantBubble
+							bind:activePollutant="{activePollutant}"
+							year={currentYear} 
+							bind:pollutantPosition={pollutantPositions[i]}
+							bind:trend={trendLineValues[i]}
+							pollutant={pollutant}
+						></PollutantBubble>
+				{/each}
+			</g>
+		</svg>
+		<h2>
+			Emission Source Composition
+		</h2>
+		<SourceGraph currentYear={currentYear}/>
+	</div>
+	
+	<PollutantInfoPanel currentYear={currentYear} currentActivePollutant={activePollutant} colorScale={colorScale}/>
 </div>
