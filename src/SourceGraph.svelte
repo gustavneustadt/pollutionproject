@@ -8,6 +8,7 @@
 	
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
+	import SourceGraphSubSources from './SourceGraphSubSources.svelte'
 
 	let store = getContext("store")
 	let width = 800
@@ -123,13 +124,11 @@
 		}
 	})
 	
-	let sourceGroupDataTweened = null
-	$: {
-		currentActivePollutant
-		sourceGroupDataTweened = tweened(null, {
+
+	let sourceGroupDataTweened = tweened(null, {
 			easing: cubicOut
 		})
-	}
+	
 	
 	
 	$: sourceGroupDataTweened.set(sourceGroupsData)
@@ -747,6 +746,7 @@
 						</g>
 						
 					{/each}
+				<SourceGraphSubSources xScale={xScale} subSources={$subSourcesDataTweened}/>
 				</g>
 			{/if}
 		</g>
