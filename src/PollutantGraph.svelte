@@ -346,7 +346,7 @@
 			</g>
 		</svg>
 		<h2>
-			Sources Composition of annual emissions
+			Annual emission composition
 		</h2>
 		<SourceGraph bind:currentYear={currentYear} bind:currentActivePollutant={activePollutant} pollutantColorScale={colorScale}/>
 	</div>

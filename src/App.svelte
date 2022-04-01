@@ -316,7 +316,7 @@ h1 {
 			<div class="right">
 				<p class="credits">
 					Created by Gustav Neustadt <br>
-					»Advances in Data Visualization: Network & Hierarchies«<br>
+					<a href="https://uclab.fh-potsdam.de/advances" target="_blank">»Advances in Data Visualization: Network & Hierarchies«</a><br>
 					by Mark-Jan Bludau<br>
 					Data from <a href="https://cdr.eionet.europa.eu/de/un/clrtap/inventories/envyb590q/overview" target="_blank">European Environment Agency (EEA)</a><br>
 					Font used <a href="https://www.lucasfonts.com/fonts/the-mix" target="_blank">»TheMix« by Luc(as) de Groot</a> <br>
