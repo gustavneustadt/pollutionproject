@@ -378,7 +378,7 @@
 	class="no-active-pollutant"
 	class:hide={isAnyPollutantActive}>
 		<span class="notice">
-			Choose a pollutant in the graph to get more information. Click anywhere in the graph to see all pollutants again.
+			Choose a pollutant in the graph to get more information.
 		</span>
 		
 		<svg class="legend" viewBox="0 0 2006 964" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">

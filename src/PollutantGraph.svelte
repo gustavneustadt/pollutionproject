@@ -283,13 +283,28 @@
 	h2:first-of-type {
 		margin: 4rem 0 0rem 12.5%;
 	}
+	.hint {
+		font-size: .9rem;
+		padding-left: 12.5%;
+		color: var(--colorTextMuted);
+	}
 </style>
 
 
 <div class="wrapper">
-	<div class="graph-wrapper" on:click={() => {activePollutant = null}}>
+	<div class="graph-wrapper">
 		<h2>Annual Air Emissions of Germany</h2>
-			<svg class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
+		<span class="hint">
+			{#if !activePollutant}
+				Click on a pollutant bubble to get more information
+			{:else}
+				Click anywhere on the graph to see all the bubbles again
+			{/if}
+		</span>
+		
+			<svg class="graph" viewBox="0 0 {width} {height}" 
+			on:click={() => {activePollutant = null}}
+			preserveAspectRatio="xMidYMid meet">
 				<g transform="translate(100, 40)">
 					
 					<path class="trend-line" d="{linePath}" />
@@ -331,9 +346,9 @@
 			</g>
 		</svg>
 		<h2>
-			Composition of emission sources
+			Sources Composition of annual emissions
 		</h2>
-		<SourceGraph currentYear={currentYear}/>
+		<SourceGraph bind:currentYear={currentYear} bind:currentActivePollutant={activePollutant} pollutantColorScale={colorScale}/>
 	</div>
 	
 	<PollutantInfoPanel currentYear={currentYear} currentActivePollutant={activePollutant} colorScale={colorScale}/>
