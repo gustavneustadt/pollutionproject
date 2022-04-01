@@ -180,7 +180,7 @@
 	display: flex;
 	/* flex-direction: column; */
 	/* max-width: 40rem; */
-	margin: 0 2rem 0 min(8.125rem, calc(70% * .125));
+	margin: 0 4rem 0 min(8.125rem, calc(70% * .125));
 	/* align-items: center; */
 	align-items: baseline;
 	position: relative;

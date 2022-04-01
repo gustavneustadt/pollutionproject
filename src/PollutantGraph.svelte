@@ -276,8 +276,12 @@
 		margin: 1rem 0 0 10%;
 	}
 	h2 {
-		margin: 4rem 0 0rem 12.5%;
+		margin: 0rem 0 0rem 12.5%;
 		color: var(--colorTextMuted);
+	}
+	
+	h2:first-of-type {
+		margin: 4rem 0 0rem 12.5%;
 	}
 </style>
 
@@ -327,7 +331,7 @@
 			</g>
 		</svg>
 		<h2>
-			Emission Source Composition
+			Composition of emission sources
 		</h2>
 		<SourceGraph currentYear={currentYear}/>
 	</div>

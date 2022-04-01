@@ -19,7 +19,7 @@
 	$: sourceGroupsCurrentYear = $store.getSourceGroupsOfYear(currentYear)
 	
 	$: totalTons = sourceGroupsCurrentYear.reduce((acc, curr) => acc + curr[2], 0)
-	$: percentagePerSourceGroup = sourceGroupsCurrentYear.map(([name, _, amount]) => [name, (amount / totalTons) * 100]).filter(([_, val]) => val > 0)
+	$: percentagePerSourceGroup = sourceGroupsCurrentYear.map(([name, _, amount]) => [name, (amount / totalTons) * 100, amount]).filter(([_, val]) => val > 0)
 	$: percentagePerSourceGroupCumulative = percentagePerSourceGroup.map(([name, percentage], i, array) => {
 		let cummulated = array.slice(0, i).reduce((acc, [_, percentage]) => acc + percentage, 0)
 		return [name, cummulated]
@@ -27,13 +27,13 @@
 	
 	$: totalTonsBase = $store.getSourceGroupsOfYear().reduce((acc, curr) => acc + curr[2], 0)
 	
-	
+	$: sourceGroupCount = percentagePerSourceGroup.length ?? 0
 	// $: console.log({percentagePerSourceGroup, percentagePerSourceGroupCumulative})
 	
 	$: xScale = d3.scaleLinear().domain([0, 100]).range([0, width - 120])
-	let colorScale = d3.scaleLinear()
-	.domain([0, 5, 13])
-	.range(["#3E2D8B", "#FFEE7D", "#830F0F"])
+	$: colorScale = d3.scaleLinear()
+	.domain([0, sourceGroupCount / 2, sourceGroupCount - 1])
+	.range(["#A5CBDD", "#E096C2", "#FFF291"])
 	
 	
 	
@@ -48,17 +48,17 @@
 	$: subSources = $store.getSubSourcesOfSourceGroup(activeSourceGroup)
 	$: subSourcesOfYear = $store.getSourcesOfYear(subSources, currentYear).filter(([a,b,val]) => val > 0)
 	$: totalSubSourceTons = subSourcesOfYear.reduce((acc, curr) => acc + curr[2], 0)
-	$: percentagePerSubSource = subSourcesOfYear.map(([name, _, amount]) => [name, amount / totalSubSourceTons * 100])
+	$: percentagePerSubSource = subSourcesOfYear.map(([name, _, amount]) => [name, amount / totalSubSourceTons * 100, amount])
 	$: percentagePerSubSourceCummulative = percentagePerSubSource.map(([name, percentage], i, array) => {
 		let cummulated = array.slice(0, i).reduce((acc, [_, percentage]) => acc + percentage, 0)
 		return [name, cummulated]
 	})
 	
 	$: subSourceColorScale = d3.scaleLinear()
-	.domain([0, subSourcesOfYear.length])
-	.range(["#e05353", "#f3e472"])
+	.domain([0, subSourcesOfYear.length / 2, subSourcesOfYear.length - 1])
+	.range(["#577f8c", "#56baa0", "#fff070"])
 	
-	$: console.log({subSources, percentagePerSubSource, totalSubSourceTons, percentagePerSubSourceCummulative})
+	// $: console.log({subSources, percentagePerSubSource, totalSubSourceTons, percentagePerSubSourceCummulative})
 	
 	
 	$: subSourcesData = percentagePerSubSource.map(([name, percentage], i) => {
@@ -78,9 +78,17 @@
 		}
 	})
 	
+	let sourceGroupDataTweened = tweened(null, {
+		easing: cubicOut
+	})
+	
+	$: sourceGroupDataTweened.set(sourceGroupsData)
+	
+	
+	
 	$: {
 		anySourceGroupActive
-		sourceGroupsData = percentagePerSourceGroup.map(([name, percentage], i) => {
+		sourceGroupsData = percentagePerSourceGroup.map(([name, percentage, amount], i) => {
 			let width = xScale(percentage)
 			let leftX = xScale(percentagePerSourceGroupCumulative[i][1])
 			let middleX = leftX + width / 2
@@ -110,6 +118,7 @@
 			return {
 				name: name,
 				percentage: percentage,
+				amount: amount,
 				position: {
 					width: width,
 					x: leftX,
@@ -197,16 +206,20 @@
 	function getLabelBgColor(color) {
 		return chroma(color).luminance(.85)
 	}
+	
+	let userActiveSourceGroup = null
+	$: activeSourceGroup = userActiveSourceGroup ?? [...percentagePerSourceGroup].sort((a, b) => a[1] < b[1])[0][0]
+	
+	$: activeSourceGroupData = $sourceGroupDataTweened.find(group => group.name == activeSourceGroup)
 
-
-	let activeSourceGroup = null
+	
 	$: anySourceGroupActive = activeSourceGroup != null
 	function activateSourceGroup(name) {
-		if(activeSourceGroup == name) {
-			activeSourceGroup = null
+		if(userActiveSourceGroup == name) {
+			userActiveSourceGroup = null
 			return
 		}
-		activeSourceGroup = name
+		userActiveSourceGroup = name
 	}
 	
 	let sourceGroupElementGroup = []
@@ -216,6 +229,79 @@
 	}
 	
 	
+	function newLink(d) {
+		let [source, target] = [d.source, d.target]
+		
+		let cu = 0.01
+		
+		let yi = d3.interpolateNumber(d.target.y, d.source.y)
+		
+		return	"M" + source.x + "," + source.y + " " +
+				"C" + source.x + "," + (source.y - yi(cu)) + " " +
+					  target.x + "," + (target.y + yi(cu)) + " " +
+					  target.x + "," + target.y + " " +
+				"L" + (target.x + target.width) + "," + target.y + " " +
+				"C" + (target.x + target.width) + "," + (target.y + yi(cu)) + " " +
+						(source.x + source.width) + "," + (source.y - yi(cu)) + " " +
+						(source.x + source.width) + "," + source.y + " " +
+				"L" + source.x + "," + source.y + " "
+					  
+	}
+	
+	function getConnection (pollutantPosition, sourcePosition) {
+	
+		let newLinkData = {
+			source: {
+				x: sourcePosition.x,
+				y: sourcePosition.y,
+				width: sourcePosition.width,
+			},
+			target: {
+				x: pollutantPosition.x,
+				y: pollutantPosition.y,
+				width: pollutantPosition.width
+			}
+		}
+		
+		return newLink(newLinkData)
+	}
+	
+	function getSubSourcesConnectionArc() {
+		if(!anySourceGroupActive) {
+			return ""
+		}
+		
+		let	sourceGroup = activeSourceGroupData
+		let sourceGroupPositions = {
+			x: sourceGroup.position.x,
+			y: sourceGroup.position.y,
+			width: sourceGroup.position.width
+		}
+		
+		let subSourcePosition = {
+			x: xScale(0),
+			y: 300,
+			width: xScale(100)
+		}
+		
+		return newLink({
+			target: sourceGroupPositions,
+			source: subSourcePosition
+		})
+		
+	}
+	
+	let subSourcePath = ""
+	
+	$: {
+		currentYear
+		activeSourceGroup
+		$sourceGroupDataTweened
+		subSourcePath = getSubSourcesConnectionArc()
+	}
+	
+	const link = d3.link()
+
 </script>
 
 <style>
@@ -275,12 +361,49 @@
 		fill: var(--colorTextEm);
 		opacity: 1;
 	}
+	.sub-source-connection {
+		fill: var(--colorBackgroundDark);
+	}
+	.source-group-amount {
+		font-size: 1.2rem;
+		font-variant-numeric: tabular-nums;
+		font-weight: 600;
+		fill: var(--colorTextEm);
+	}
+	.source-group-percentage {
+		font-variant-numeric: tabular-nums;
+		font-weight: 600;
+		fill: var(--colorTextMuted);
+	}
 </style>
 
 <div class="wrapper">
 	<svg class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet" on:click={() => activateSourceGroup(null)}>
 		<g transform="translate(100, 40)">
-			{#each sourceGroupsData as sourceGroup, i}
+			{#if anySourceGroupActive}
+				<path class="sub-source-connection" transform="translate(0, 20)" d={subSourcePath} fill="black"/>
+				<g
+					transform="translate(
+					{xScale(50) + (activeSourceGroupData.position.middle - xScale(50)) / 1.08},
+					{activeSourceGroupData.position.y + 100}
+					)"
+				>
+					<text
+						class="source-group-percentage"
+						text-anchor="middle"
+						y="-20"
+					>	
+						{activeSourceGroupData.percentage.toFixed(1)} %
+					</text>
+					<text 
+						class="source-group-amount"
+						text-anchor="middle"
+					>
+						{$store.niceNumbers(activeSourceGroupData.amount.toFixed(0))} kt
+					</text>
+				</g>
+			{/if}
+			{#each $sourceGroupDataTweened as sourceGroup, i}
 				<g class="source-group"
 				class:active={activeSourceGroup == sourceGroup.name}
 				class:not-active={anySourceGroupActive && activeSourceGroup != sourceGroup.name}
@@ -309,7 +432,9 @@
 						transform="translate({renderedLabels[i] ? renderedLabels[i].x : 0}, {renderedLabels[i] ? renderedLabels[i].y : 0})"
 					>
 						<rect class="label-bg" x="{(labelWidths[i] ? labelWidths[i] + 1 : 0) / -2}" y="0" width={labelWidths[i]} height="24" rx="5" ry="5"/>
-						<text class="label-text" x="" y="5" text-anchor="middle" bind:this={labelElements[i]} dominant-baseline="hanging">{labelRenames[sourceGroup.name]}</text>
+						<text class="label-text" x="" y="5" text-anchor="middle" bind:this={labelElements[i]} dominant-baseline="hanging">{labelRenames[sourceGroup.name]}
+							
+						</text>
 					</g>
 				</g>
 			{/each}
@@ -318,7 +443,7 @@
 			{/each}
 			
 			{#if anySourceGroupActive} 
-				<g transform="translate(0, 300)">
+				<g transform="translate(0, 220)">
 					{#each subSourcesData as subSource, i}
 						<g 
 						transform="translate({subSource.position.x}, {subSource.position.y})"
@@ -327,12 +452,12 @@
 						">
 							<rect class="bar" x="0" y="0" width={subSource.position.width} height="20" />
 								
-							<text>{subSource.name}</text>
+							<!-- <text>{subSource.name}</text> -->
 						</g>
 					{/each}
 				</g>
 			{/if}
-			
 		</g>
+			
 	</svg>
 </div>

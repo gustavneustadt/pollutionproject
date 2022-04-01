@@ -203,7 +203,7 @@
 		top: 0;
 		left: 0;
 		opacity: .35;
-		z-index: -1;
+		/* z-index: -1; */
 		/* filter: grayscale(.9); */
 		/* mix-blend-mode: hard-light; */
 	}
