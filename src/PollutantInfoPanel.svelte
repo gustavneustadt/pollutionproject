@@ -230,6 +230,7 @@
 .wrapper {
 	width: 30%;
 	/* max-width: 20rem; */
+	z-index: 1;
 	display: flex;
 	flex-direction: column;
 	background: var(--colorBackground);

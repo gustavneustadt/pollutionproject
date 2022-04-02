@@ -71,58 +71,7 @@
 
 	let sourceLabelPositions = []
 	let sourceGroupsData = []
-	$: subSources = $store.getSubSourcesOfSourceGroup(activeSourceGroup)
-	
-	$: subSourcesOfYear = $store.getSourcesOfYear(subSources, currentYearBased).map(([name, pollutants, totalAmount]) => {
-		
-		totalAmount = currentActivePollutant ? pollutants[currentActivePollutant] : totalAmount
-		
-		return [name, pollutants, totalAmount]
-	}).filter(([a,b,val]) => val > 0)
-	
-	$: totalSubSourceTons = subSourcesOfYear.reduce((acc, curr) => acc + curr[2], 0)
-	$: percentagePerSubSource = subSourcesOfYear.map(([name, _, amount]) => [name, amount / totalSubSourceTons * 100, amount])
-	$: percentagePerSubSourceCummulative = percentagePerSubSource.map(([name, percentage], i, array) => {
-		let cummulated = array.slice(0, i).reduce((acc, [_, percentage]) => acc + percentage, 0)
-		return [name, cummulated]
-	})
-	
-	$: subSourceColorScale = d3.scaleLinear()
-	.domain([0, subSourcesOfYear.length / 2, subSourcesOfYear.length - 1])
-	.range(["#577f8c", "#56baa0", "#FFE591"])
-	
-	// .range([colorScale(activeSourceGroupData ? activeSourceGroupData.index : 0), "white"])
-	
-	// $: console.log({subSources, percentagePerSubSource, totalSubSourceTons, percentagePerSubSourceCummulative})
-	
-	let subSourcesDataTweened = null
-	
-	$: {
-		activeSourceGroup
-		currentActivePollutant
-		subSourcesDataTweened = tweened(null, {
-			easing: cubicOut
-		})
-	}
-	
-	$: subSourcesDataTweened.set(subSourcesData)
-	
-	$: subSourcesData = percentagePerSubSource.map(([name, percentage], i) => {
-		let width = i != 0 ? xScale(percentage) > 1 ? xScale(percentage) - 1 : 0 : xScale(percentage)
-		let leftX = i != 0 ? xScale(percentagePerSubSourceCummulative[i][1]) + 1 : xScale(percentagePerSubSourceCummulative[i][1])
-		let middleX = leftX + width / 2
-		
-		return {
-			name: name,
-			percentage: percentage,
-			position: {
-				width: width,
-				x: leftX,
-				y: 100,
-				middle: middleX
-			}
-		}
-	})
+
 	
 
 	let sourceGroupDataTweened = tweened(null, {
@@ -261,7 +210,7 @@
 	}
 	
 	function getLabelBgNotActiveColor(color) {
-		return chroma(color).luminance(.92)
+		return chroma(color).luminance(.9)
 	}
 	
 	let userActiveSourceGroup = null
@@ -438,8 +387,7 @@
 			subGroupTotalWidth.set(0)
 		}
 	}
-	
-	
+
 </script>
 
 <style>
@@ -489,7 +437,7 @@
 	}
 	
 	.source-group.not-active .label-text {
-		opacity: .7;
+		opacity: .6;
 	}
 	
 	.label-line.hovered, .label-line.active {
@@ -527,11 +475,11 @@
 	.wrapper.deactivated .graph {
 		pointer-events: none;
 		opacity: .8;
-		filter: saturate(0);
+		filter: saturate(0) blur(3px);
 	}
 	
 	.graph {
-		transition: .2s opacity ease;
+		transition: .2s opacity ease, .2s filter ease;
 	}
 	
 	.no-data-hint {
@@ -568,7 +516,9 @@
 		gap: .5rem;
 		margin-left: 12.5%;
 		margin-top: 1rem;
-		overflow: hidden;
+		z-index: 0;
+		position: relative;
+		/* overflow: hidden; */
 	}
 	
 	.pollutant-select-item {
@@ -576,11 +526,13 @@
 		font-size: .9rem;
 		padding: .25rem .5rem;
 		border-radius: .2rem;
-		background: var(--colorBackgroundDark);
+		background: var(--colorBackground);
 		cursor: pointer;
+		box-shadow: 0 0 0 1px var(--colorBackgroundDark);
 	}
 	.pollutant-select-item:hover, .pollutant-select-item.active {
 		color: var(--colorTextEm);
+		background: var(--colorBackgroundDark);
 	}
 	.pollutant-wrapper {
 		display: flex;
@@ -637,7 +589,7 @@
 	<div class="no-data-hint left-padding" class:hide={pollutantDataForCurrentYear}>
 		No data is available for the selected year {currentYear}. Go to <b>{firstYear}</b>
 	</div>
-	<svg bind:this={graph} class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet" on:click={() => activateSourceGroup(null)}>
+	<svg bind:this={graph} class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
 		<g transform="translate(100, 40)">		
 			{#if activeSourceGroupData}
 					{#if activeSourceGroupData.amount > 0}
@@ -727,29 +679,19 @@
 					</g>
 			{/each}
 			
-			{#if anySourceGroupActive} 
+			{#if anySourceGroupActive && activeSourceGroupData.amount > 0} 
 				<g transform="translate({xScale(50 - ($subGroupTotalWidth * 50))}, 220) scale({$subGroupTotalWidth}, 1)">
-					{#each $subSourcesDataTweened as subSource, i}
-						<g 
-						transform="translate({subSource.position.x}, {subSource.position.y})"
-						style="
-							--color: {subSourceColorScale(i)}
-						">
-							<rect class="bar" x="0" y="0" width={subSource.position.width} height="20" />
-								
-						</g>
-						
-						<g transform="translate({xScale(50)}, {subSource.position.y + 40})">
-							<text
-								text-anchor="middle"
-							>{subSource.name}</text>
-						</g>
-						
-					{/each}
-				<SourceGraphSubSources xScale={xScale} subSources={$subSourcesDataTweened}/>
+				
+					<SourceGraphSubSources 
+						xScale={xScale} 
+						activeSourceGroup={activeSourceGroup}
+						currentYearBased={currentYearBased}	
+						currentActivePollutant={currentActivePollutant}
+					/>
 				</g>
 			{/if}
 		</g>
 			
 	</svg>
+
 </div>
