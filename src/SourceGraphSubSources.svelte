@@ -51,13 +51,13 @@
 		
 	}
 	
-	let bell = function(x, spread = null, peak = null) {
+	function bell(x, spread = null, peak = null) {
 	
 		x = x 
 		let width = spread //wideness
 		let max = peak //highest point of bell
 		
-		let first = 1 / Math.sqrt(Math.PI * 2)
+		let first = 1 / (width * Math.sqrt(Math.PI * 2))
 		let third = -(1/2)*Math.pow(((x - max) / width), 2)
 		let second = Math.pow(Math.E, third)
 		
@@ -65,7 +65,7 @@
 	}
 	
 	
-	$: stackValues = subSources.map((_, i) => bell(i, 0.5, subSources.length * $progressTweened))
+	$: stackValues = subSources.map((_, i) => bell(i, 0.5, (subSources.length - 1) * $progressTweened))
 	$: stackKeys = subSources.map((_, i) => i)
 	// $: console.log(stackValues, stackKeys)
 	
@@ -81,14 +81,13 @@
 	$: stackedScaled = stacked.map(([xFrom, xTo]) => [xScaleStacked(xFrom), xScaleStacked(xTo)])
 	
 	$: subSourcesLabels = subSourcesData.map((source, i) => {
-		
+		let progress = bell(i, 0.65, (subSources.length - 1) * $progressTweened)
 		return {
-			label: source.name,
 			x: math.round(stackedScaled[i][0], 3),
 			y: 0,
 			// size: bell(i, 1, (subSources.length ) * $progressTweened) * 20,
 			size: 20,
-			progress: bell(i, 0.65, subSources.length * $progressTweened),
+			progress: bell(i, 0.65, (subSources.length - 1) * $progressTweened),
 			width: stackedScaled[i][1] - stackedScaled[i][0]
 		}
 		
@@ -175,7 +174,7 @@
 		style="
 			--color: {subSourceColorScale(i)}
 		">
-			<rect class="bar" x="0" y="0" width={subSource.position.width} height="20" />
+			<rect class="bar" x="0" y="0" width={subSource.position.width} height="40" />
 				
 		</g>
 	{/each}
@@ -204,17 +203,24 @@
 		{/if}
 		<g
 		opacity={source.progress}
-		transform="translate({source.x + source.width / 2}, 0)"
+		transform="translate({source.x + source.width / 2}, 20)"
 		style="	--color: {subSourceColorScale(i)}">
 			<text fill="black" text-anchor="middle"
-			style="font-size: {source.size}px"
+			style="font-size: 15px"
 			>
-				{source.label}
+				{subSourcesData[i].name}
+			</text>
+			
+			<text 
+			fill="black" text-anchor="middle"
+			y="30"
+			style="font-size: 15px"
+			>
+				{$store.subSourceDescriptions[subSourcesData[i].name]}
 			</text>
 			
 		</g>
 	{/each}
-	<!-- {console.log({stacked})} -->
 	{#each stacked as item, i}
 		<!-- <rect x={stackedScaled[i][0]} width={stackedScaled[i][1] - stackedScaled[i][0]} height="20" y="40" fill="red" opacity="0.2"/> -->
 		<!-- <line x1={stackedScaled[i][0]} y1="40" x2={stackedScaled[i][0]} y2="70" stroke="red"/>

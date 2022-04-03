@@ -590,10 +590,10 @@
 		No data is available for the selected year {currentYear}. Go to <b>{firstYear}</b>
 	</div>
 	<svg bind:this={graph} class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
-		<g transform="translate(100, 40)">		
+		<g transform="translate(100, 30)">		
 			{#if activeSourceGroupData}
 					{#if activeSourceGroupData.amount > 0}
-						<path class="sub-source-connection" transform="translate(0, 20)" d={subSourcePath} fill="black"/>			
+						<path class="sub-source-connection" transform="translate(0, 40)" d={subSourcePath} fill="black"/>			
 					{/if}
 					<g
 						class="active-source-wrapper"
@@ -664,7 +664,7 @@
 						{#if sourceGroup.amount > 0}
 							<g 
 							transform="translate({sourceGroup.position.x}, {sourceGroup.position.y})">
-								<rect class="bar" x="0" y="0" width={sourceGroup.position.width} height="20" />
+								<rect class="bar" x="0" y="0" width={sourceGroup.position.width} height="40"/>
 							</g>
 						{/if}
 					
