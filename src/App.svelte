@@ -223,6 +223,13 @@ p a:hover {
 	/* height: 200vh; */
 }
 
+.graphs-wrapper :global(*) {
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
 h1 .subtitle {
 	color: var(--colorPrimary);
 	font-style: italic;
@@ -331,7 +338,20 @@ h1 {
 					<a href="https://www.eea.europa.eu/sandbox/laura/air-quality-status-briefing-2021" target="_blank">Air Quality Status (EEA)</a><br>
 					<a href="https://www.eea.europa.eu/publications/air-quality-in-europe-2021/health-impacts-of-air-pollution" target="_blank">Health Impacts of Air Pollution (EEA)</a><br>
 				</p>
-				
+				<div class="seperator"/>
+				<p class="credits">
+					Main Tools<br>
+				</p>
+				<p class="credits">
+					Web<br>
+					<a href="https://projects.au.dk/mapeire/spatial-modelling/requirements/" target="_blank">Svelte</a> <br>
+					<a href="https://unfccc.int/sites/default/files/resource/AGI%202020_final.pdf" target="_blank">D3</a><br>
+				</p>
+				<p class="credits">
+					Data Refinement<br>
+					<a href="https://www.eea.europa.eu/sandbox/laura/air-quality-status-briefing-2021" target="_blank">Python</a><br>
+					<a href="https://www.eea.europa.eu/publications/air-quality-in-europe-2021/health-impacts-of-air-pollution" target="_blank">Jupyter</a><br>
+				</p>
 			</div>
 		</div>
 		{#if initialized}

@@ -3,8 +3,11 @@
 	import * as d3 from 'd3'
 	import * as math from "mathjs"
 	import {getContext} from 'svelte'
+	import { pan } from 'svelte-gestures';
 	import {tweened} from 'svelte/motion'
 	import {cubicOut} from 'svelte/easing'
+	import chroma from "chroma-js"
+	import { unit } from "mathjs"
 	export let xScale
 	
 	
@@ -12,27 +15,42 @@
 	export let currentYearBased
 	export let currentActivePollutant
 	
-	function handleMouse(e) {
-		pointer = d3.pointer(e)
+	export const scrolled = function(e) {
+		if(mouseIsOver) {
+			// e.deltaY
+			setScrollDelta(e.deltaY / subSourcesData.length)
+			e.preventDefault()
+			
+		}
 	}
+	
+	function setScrollDelta(deltaY) {
+		let newScroll = scrollDelta + deltaY
+		scrollDelta = newScroll > groupRectWidth ? groupRectWidth : newScroll < 0 ? 0 : newScroll
+	}
+	
 	let group
 	
+	// $: d3.select(group).call(d3.zoom().on("zoom", zoomed))
 	let store = getContext("store")
 	
 	$: groupRectWidth = group ? group.getBBox().width : null
-	$: progress = pointer[0] / xScale(100)
-	
+	$: scrollDelta = 0
+	$: progress = scrollDelta / xScale(100)
 	
 	let pointer = [0, 0]
 	$: {
 		activeSourceGroup
 		pointer = [0, 0]
+		scrollDelta = 0
 		progressTweened = tweened(0, {
-			easing: cubicOut
+			easing: cubicOut,
+			duration: 1000
 		})
 	}
 	let progressTweened = tweened(0, {
-		easing: cubicOut
+		easing: cubicOut,
+		duration: 1000
 	})
 	$: progressTweened.set(progress)
 	
@@ -85,10 +103,11 @@
 		return {
 			x: math.round(stackedScaled[i][0], 3),
 			y: 0,
+			label: $store.subSourceDescriptions[source.name],
 			// size: bell(i, 1, (subSources.length ) * $progressTweened) * 20,
 			size: 20,
-			progress: bell(i, 0.65, (subSources.length - 1) * $progressTweened),
-			width: stackedScaled[i][1] - stackedScaled[i][0]
+			progress: math.round(bell(i, 0.65, (subSources.length - 1) * $progressTweened), 10),
+			width: math.round(stackedScaled[i][1] - stackedScaled[i][0], 5)
 		}
 		
 		// return [
@@ -97,6 +116,11 @@
 		// 	60,
 		// 	bell(i) * 100
 		// ]
+	})
+	
+	$: subSourceLabelsSplitted = subSourcesData.map(source => {
+		let label = $store.subSourceDescriptions[source.name]
+		return convertSourceDescription(label)
 	})
 	
 	
@@ -121,7 +145,20 @@
 	
 	$: subSourceColorScale = d3.scaleLinear()
 		.domain([0, subSourcesOfYear.length / 2, subSourcesOfYear.length - 1])
-		.range(["#577f8c", "#56baa0", "#FFE591"])
+		.range(["#577f8c", "#56baa0", "#FFC06F"])
+		// .range(["#77ACBD", "#7BDFC5", "#FFE88F"])
+		
+	$: backgroundColorScale = (i) => {
+		return chroma(subSourceColorScale(i)).luminance(.7)
+	}
+	
+	$: textColorScale = (i) => {
+		return chroma(subSourceColorScale(i)).luminance(.1)
+	}
+	
+	$: textMutedColorScale = (i) => {
+		return chroma(subSourceColorScale(i)).luminance(.35)
+	}
 	
 	let subSourcesDataTweened = null
 	
@@ -160,72 +197,252 @@
 		
 	const link = d3.linkVertical()
 	
+	
+	function convertSourceDescription(description) {
+		const regex = /((?<group01a>.*?): (?<group02a>.*);(?<group03a>.*))|((?<group01b>.*?): (?<group02b>.*))|((?<group02c>.*);(?<group03c>.*))|(?<group02d>.*)/g;
+		
+		let [all, ga, g01a, g02a, g03a, gb, g01b, g02b, gc, g02c, g03c, g02d] = regex.exec(description).map(match => match ?? "")		
+		
+		let groupsMerged = [
+			g01a + g01b,
+			g02a + g02b + g02c + g02d,
+			g03a + g03c
+		]
+		
+		let splittedGroups = groupsMerged.map(group => group.split("%n"))
+		
+		let lineHeight = [17, 20, 20]
+		let groupSpace = [25, 5, 0]
+		let groupClasses = ["source-above-title", "source-title", "source-sub-title"]
+		
+		let tSpanned = splittedGroups.map((group, i) => {	
+			let height = lineHeight[i]
+			let lines = group.reduce((acc, lineText, j) => {
+				if(j > 0) {
+					return acc + `<tspan dy="${height}" x="0">${lineText}</tspan>`
+				}
+					return acc + `<tspan x="0">${lineText}</tspan>`
+			}, "")
+		
+			return {
+				lines: lines,
+				y: group.length * height
+			}
+		})
+		
+		let groupHeight = 0
+		let groups = splittedGroups.map((group, i) => {
+			
+			
+			let height = tSpanned[i].y
+			let y = groupHeight + groupSpace[i]
+			
+			groupHeight = height + y
+			
+			return {
+				class: groupClasses[i],
+				y: y,
+				tspans: tSpanned[i].lines
+			}
+		})
+		return groups
+	}
+	function showSourceInfo(i) {
+		if(grabbing) {
+			return
+		}
+		scrollDelta = (xScale(100) * i) / (subSourcesData.length - 1)
+	}
+	
+	function mouseOver(state) {
+		mouseIsOver = state
+	}
+	let mouseIsOver = false
+	
+	let lastPanPos = [null, null]
+	let grabbing = false
+	function handlePanDown(e) {
+		grabbing = true
+	}
+	
+	function handlePanUp(e) {
+		e.preventDefault()
+		lastPanPos = [null, null]
+		grabbing = false
+	}
+	
+	function handlePan(e) {
+		let pos = [e.detail.x, e.detail.y]
+		
+		let delta = [lastPanPos[0] - pos[0], lastPanPos[1] - pos[1]]
+		if(lastPanPos[0] != null && Math.abs(delta[0]) < 100) {
+			setScrollDelta(delta[0] / subSourcesData.length * 5)
+		}
+		lastPanPos = pos
+	}
+	function handleBarClick(e, i) {
+		showSourceInfo(i)
+		
+	}
+	
+	function formatAmount(mathJsUnit) {
+		let number = mathJsUnit.toJSON()
+		return $store.niceNumbers(number.value.toFixed(0)) + " " + number.unit
+	}
 </script>
 <style>
 	.bar {
 		fill: var(--color);
+		cursor: pointer;
+	}
+	.wrapper-group {
+		cursor: grab;
+	}
+	
+	.grabbing {
+		cursor: grabbing;
+	}
+	.drag-hint {
+		font-feature-settings: "smcp";
+		letter-spacing: .04rem;
+		fill: var(--colorTextMuted);
+		font-size: .9rem;
+	}
+	.source-identifier {
+		font-variant: all-small-caps;
+		font-feature-settings: "smcp";
+		font-size: .8rem;
+		fill: var(--colorTextMuted);
+		letter-spacing: .1rem;
+	}
+	.source-above-title {
+		fill: var(--colorTextMuted);
+		font-size: .8rem;
+	}
+	.source-title {
+		
+		fill: var(--colorText);
+		font-size: 1rem;
+	}
+	.source-sub-title {
+		fill: var(--colorTextMuted);
+		font-size: .8rem;
+		font-style: italic;
+	}
+	
+	.source-amount {
+		font-size: 1.2rem;
+		font-weight: 700;
+		fill: var(--colorText);
+		font-variant-numeric: tabular-nums;
+	}
+	.source-percentage {
+		fill: var(--colorTextMuted);
+		font-variant-numeric: tabular-nums;
 	}
 </style>
-<g bind:this={group} on:mousemove={handleMouse} transform="translate(0, 80)">
+<g class="wrapper-group" transform="translate(0, 300)" 
+on:mouseenter={() => mouseOver(true)} on:mouseleave={() => mouseOver(false)}>
+<text x={xScale(50)} y="-10" text-anchor="middle" class="drag-hint">← drag, scroll or click☟ →</text>
+	<g bind:this={group}>
+		{#each $subSourcesDataTweened as subSource, i}
+			<g 
+			transform="translate({subSource.position.x}, {subSource.position.y})"
+			style="
+				--color: {subSourceColorScale(i)}
+			">
+				<rect class="bar" x="0" y="0" width={subSource.position.width} height="40" 
+				on:click={(e) => handleBarClick(e, i)}
+				/>
+					
+			</g>
+		{/each}
+	</g>
 	
-	{#each $subSourcesDataTweened as subSource, i}
-		<g 
-		transform="translate({subSource.position.x}, {subSource.position.y})"
-		style="
-			--color: {subSourceColorScale(i)}
-		">
-			<rect class="bar" x="0" y="0" width={subSource.position.width} height="40" />
+	<g transform="translate(0, 40)"
+	class:grabbing={grabbing}
+	on:panup={handlePanUp}
+	on:pandown={handlePanDown}
+	on:pan={handlePan}
+	use:pan="{{delay:80}}">
+		
+		<rect width={xScale(100)} height="300" fill="transparent"/>
+		{#each subSourcesLabels as source, i}
+			
+			<!-- {console.log(source.x + source.width / 2)} -->
+			{#if $subSourcesDataTweened[i].amount > 0}
+				<path d={
+					link({
+						source: [
+							math.round(source.x + source.width / 2, 5),
+							100
+						],
+						target: [
+							$subSourcesDataTweened[i].position.x + $subSourcesDataTweened[i].position.width / 2,
+							0
+						]
+					})
+				}
+				stroke-width="{source.progress * 1 + 1}"
+				opacity="{source.progress * 0.8 + .2}"
+				stroke={subSourceColorScale(i)}
+				fill="none"/>
+			{/if}
+			<g
+			
+			transform="translate({(source.x + source.width / 2)}, 100) scale({source.progress}, {source.progress})"
+			style="	--color: {subSourceColorScale(i)}; --colorTextMuted: {textMutedColorScale(i)}; --colorText: {textColorScale(i)}">
 				
-		</g>
-	{/each}
+				<rect width={320} height={155} x="-160" rx="5" ry="5" fill={backgroundColorScale(i)}/>
+				
+				<g transform="translate(-150, 20)">
+					
+					<text 
+					fill="black" text-anchor="left"
+					y="0"
+					class="source-identifier"
+					>
+						{subSourcesData[i].name}
+					</text>
+					{#each subSourceLabelsSplitted[i] as group}
+						<text 
+						fill="black" text-anchor="left"
+						dy={group.y}
+						class="{group.class}"
+						>
+							{@html group.tspans}
+						</text>
+					{/each}
+					
+					
+					<text 
+					y="120"
+					class="source-percentage"
+					>
+						{$subSourcesDataTweened[i].percentage.toFixed(1)} %
+					</text>
+					<text 
+					text-anchor="end"
+					class="source-amount"
+					y="120"
+					x="300"
+					>	
+					
+						{#if $subSourcesDataTweened[i].amount < 1}
+							{formatAmount(unit($subSourcesDataTweened[i].amount, 'kt').to('t'))}
+						{:else if $subSourcesDataTweened[i].amount >= 1}
+							{formatAmount(unit($subSourcesDataTweened[i].amount, 'kt').to('kt'))}
+						{/if}
 	
-	<g transform="translate(0, 100)">
-		
-	{#each subSourcesLabels as source, i}
-		
-		<!-- {console.log(source.x + source.width / 2)} -->
-		{#if $subSourcesDataTweened[i].amount > 0}
-			<path d={
-				link({
-					source: [
-						math.round(source.x + source.width / 2, 5),
-						0
-					],
-					target: [
-						$subSourcesDataTweened[i].position.x + $subSourcesDataTweened[i].position.width / 2,
-						-80
-					]
-				})
-			}
-			stroke-width="2"
-			stroke={subSourceColorScale(i)}
-			fill="none"/>
-		{/if}
-		<g
-		opacity={source.progress}
-		transform="translate({source.x + source.width / 2}, 20)"
-		style="	--color: {subSourceColorScale(i)}">
-			<text fill="black" text-anchor="middle"
-			style="font-size: 15px"
-			>
-				{subSourcesData[i].name}
-			</text>
-			
-			<text 
-			fill="black" text-anchor="middle"
-			y="30"
-			style="font-size: 15px"
-			>
-				{$store.subSourceDescriptions[subSourcesData[i].name]}
-			</text>
-			
-		</g>
-	{/each}
-	{#each stacked as item, i}
-		<!-- <rect x={stackedScaled[i][0]} width={stackedScaled[i][1] - stackedScaled[i][0]} height="20" y="40" fill="red" opacity="0.2"/> -->
-		<!-- <line x1={stackedScaled[i][0]} y1="40" x2={stackedScaled[i][0]} y2="70" stroke="red"/>
-		<line x1={stackedScaled[i][1]} y1="40" x2={stackedScaled[i][0]} y2="70" stroke="blue"/> -->
-	{/each}
+					</text>
+				</g>
+				
+				
+				
+				
+			</g>
+		{/each}
 	</g>
 </g>
 
+<!-- ((.*)(: | - )(.+))|(.+) -->

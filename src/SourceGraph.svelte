@@ -12,7 +12,7 @@
 
 	let store = getContext("store")
 	let width = 800
-	let height = 600
+	let height = 1000
 	
 	export let currentYear
 	export let currentActivePollutant
@@ -139,7 +139,7 @@
 		if(el == null) {
 			return 0
 		}
-		return el.clientWidth + 10
+		return el.getBBox().width + 10
 	})
 	
 	let labelPositions = []
@@ -194,7 +194,7 @@
 		"Fugitive": "Fugitive Emissions",
 		"Industry": "Industry",
 		"Offroad": "Non-Road Traffic",
-		"OtherStationaryComb": "Small Combustion Sectors",
+		"OtherStationaryComb": "Small Stationary Combustion",
 		"PublicPower": "Energy Production",
 		"RoadTransport": "Road Traffic",
 		"Shipping": "Shipping",
@@ -291,17 +291,23 @@
 	function newLink(d) {
 		let [source, target] = [d.source, d.target]
 		
-		let cu = 0.01
+		let cu = 0.5
 		
 		let yi = d3.interpolateNumber(d.target.y, d.source.y)
 		
+		let interpolatedY = {
+			source: yi(1 - cu),
+			target: yi(cu)
+		}
+
+		
 		return	"M" + source.x + "," + source.y + " " +
-				"C" + source.x + "," + (source.y - yi(cu)) + " " +
-					  target.x + "," + (target.y + yi(cu)) + " " +
+				"C" + source.x + "," + (interpolatedY.source) + " " +
+					  target.x + "," + (interpolatedY.target) + " " +
 					  target.x + "," + target.y + " " +
 				"L" + (target.x + target.width) + "," + target.y + " " +
-				"C" + (target.x + target.width) + "," + (target.y + yi(cu)) + " " +
-						(source.x + source.width) + "," + (source.y - yi(cu)) + " " +
+				"C" + (target.x + target.width) + "," + (interpolatedY.target) + " " +
+						(source.x + source.width) + "," + (interpolatedY.source) + " " +
 						(source.x + source.width) + "," + source.y + " " +
 				"L" + source.x + "," + source.y + " "
 					  
@@ -333,7 +339,7 @@
 		let	sourceGroup = $activeSourceGroupDataTweened
 		let sourceGroupPositions = {
 			x: sourceGroup.position.x,
-			y: sourceGroup.position.y,
+			y: sourceGroup.position.y + 40,
 			width: sourceGroup.position.width
 		}
 		
@@ -344,8 +350,8 @@
 		}
 		
 		return newLink({
-			target: sourceGroupPositions,
-			source: subSourcePosition
+			target: subSourcePosition,
+			source: sourceGroupPositions
 		})
 		
 	}
@@ -387,7 +393,14 @@
 			subGroupTotalWidth.set(0)
 		}
 	}
+	
 
+	let subSourcesGraph
+	function handleWheel(e) {
+		if(subSourcesGraph) {
+			subSourcesGraph.scrolled(e)
+		}
+	}
 </script>
 
 <style>
@@ -589,11 +602,11 @@
 	<div class="no-data-hint left-padding" class:hide={pollutantDataForCurrentYear}>
 		No data is available for the selected year {currentYear}. Go to <b>{firstYear}</b>
 	</div>
-	<svg bind:this={graph} class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
+	<svg bind:this={graph} on:wheel={handleWheel} class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
 		<g transform="translate(100, 30)">		
 			{#if activeSourceGroupData}
 					{#if activeSourceGroupData.amount > 0}
-						<path class="sub-source-connection" transform="translate(0, 40)" d={subSourcePath} fill="black"/>			
+						<path class="sub-source-connection" d={subSourcePath} fill="black"/>			
 					{/if}
 					<g
 						class="active-source-wrapper"
@@ -680,9 +693,10 @@
 			{/each}
 			
 			{#if anySourceGroupActive && activeSourceGroupData.amount > 0} 
-				<g transform="translate({xScale(50 - ($subGroupTotalWidth * 50))}, 220) scale({$subGroupTotalWidth}, 1)">
+				<g transform="translate({xScale(50 - ($subGroupTotalWidth * 50))}, 0) scale({$subGroupTotalWidth}, 1)">
 				
 					<SourceGraphSubSources 
+						bind:this={subSourcesGraph}
 						xScale={xScale} 
 						activeSourceGroup={activeSourceGroup}
 						currentYearBased={currentYearBased}	

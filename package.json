@@ -24,6 +24,7 @@
     "d3-force-boundary": "^0.0.2",
     "mathjs": "^10.4.2",
     "sirv-cli": "^1.0.0",
+    "svelte-gestures": "^1.4.1",
     "three": "^0.139.0"
   }
 }
