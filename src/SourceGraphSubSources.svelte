@@ -347,7 +347,7 @@
 <g class="wrapper-group" transform="translate(0, 300)" 
 on:mouseenter={() => mouseOver(true)} on:mouseleave={() => mouseOver(false)}>
 {#if totalSubSourceTons > 0}
-	<text x={xScale(50)} y="-10" text-anchor="middle" class="drag-hint">← drag, scroll or select☟ →</text>
+	<text x={xScale(50)} y="-10" text-anchor="middle" class="drag-hint">← drag, scroll → or select ⤵</text>
 {/if}
 {#if totalSubSourceTons == 0}
 	<text x={xScale(50)} y="100" text-anchor="middle" class="drag-hint">← drag or scroll →</text>

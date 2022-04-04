@@ -701,7 +701,7 @@
 			{/each}
 			
 			{#if !anySourceGroupActive}
-				<text class="click-hint" x={xScale(50)} y={160} text-anchor="middle">select☝</text>
+				<text class="click-hint" x={xScale(50)} y={160} text-anchor="middle">select ⤴</text>
 			{/if}
 			
 			{#if anySourceGroupActive} 
