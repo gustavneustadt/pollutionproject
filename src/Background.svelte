@@ -24,7 +24,6 @@ let size = {
 		width: 100%;
 		position: absolute;
 		top: 0;
-		bottom: 0;
 		object-fit: cover;
 		filter: blur(1.5px);
 	}

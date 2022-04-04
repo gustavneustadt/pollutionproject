@@ -246,6 +246,7 @@ h1 {
 	z-index: 10;
 	position: sticky;
 	top: calc(var(--intro-height) + 6rem);
+	border-bottom: 2px solid var(--colorBorder);
 	/* padding-top: 100%; */
 	/* transform: translateY(calc(-100% + 6rem)); */
 	/* outline: 100px solid red; */

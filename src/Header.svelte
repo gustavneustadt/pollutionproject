@@ -21,7 +21,6 @@
 		left: 0;
 		z-index: 100;
 		background: var(--colorBackground);
-		border-bottom: 2px solid var(--colorBorder);
 		height: 6rem;
 		display: flex;
 		align-items: flex-end;
