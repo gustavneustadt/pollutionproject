@@ -1,384 +1,369 @@
 <script>
 	import * as d3 from 'd3'
 	import chroma from "chroma-js"
-	import { onMount, setContext } from 'svelte'
+	import { onMount, setContext, getContext } from 'svelte'
+	import { writable } from 'svelte/store'
 	import PollutantBubble from './PollutantBubble.svelte'
+	import Header from './Header.svelte'
+	import Background from './Background.svelte'
 	
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
+	
+	import PollutantGraph from "./PollutantGraph.svelte"
 	
 	let data = []
 	
 	let pollutantsData = []
 	
+	let sourcesData
+	
+	let sourceGroupsData
+	let subSourcesData
+	let subSourcesPerSourceGroupData
+	let descriptionPerSubSourcesData
+	
+	let introHeight
+	
+	
 
-		
-	const width = 800
-	const height = 1000
-	
-	var currentYear = 4
-	
-	const pollutants = 		
-	["BC",		"CO", 		"NH3", 		"NMVOC", 	"NOx",		"PM10", 	"PM2.5",	"SO2",		"TSP"]
-	const pollutantColors = 
-	["#509CF7", "#FFCC00", 	"#5856D6", 	"#34C759", 	"#FF2D55",	"#AF52DE", 	"#FF9500",	"#37D2AC",	"#83DCFF"]
-	const years = [1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
-	const sources = ["Energy", "Industry", "Agriculture", "Waste"]
-	
-	let trendLineValues = pollutants.map(pollutant => {
-		return 0;
-	})
-	
-	let pollutantPositions = pollutants.map(pollutant => {
-		return {
-			x: 0,
-			y: 0
+	const store = writable({
+		sourceGroups: null,
+		subSources: null,
+		subSourceDescriptions: null,
+		subSourcesPerSourceGroup: null,
+		pollutants: null,
+		years: [1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019],
+		getFirstYearIndex: function(values) {
+			let index = values.findIndex(([_, amount]) => amount > 0)
+			
+			return index ?? 0
+		},
+		getFirstYear: function(values) {
+			let year = values.find(([_, amount]) => amount > 0)
+			
+			return year ? year[0] : null
+		},
+		getBaseValue: function(values) {
+			let value = values.find(([_, amount]) => amount > 0)
+			return value ? value[1] : null
+		},
+		getMinYear: function() {
+			return Math.min(...this.years)	
+		},
+		getMaxYear: function() {
+			return Math.max(...this.years)	
+		},
+		pollutantNames: ["BC",		"CO", 		"NH3", 		"NMVOC", 	"NOx",		"PM10", 	"PM2.5",	"SO2",		"TSP"],
+		getYear: function(yearIndex) {
+			return this.years[yearIndex]	
+		},
+		niceNumbers: function(number) {
+			let string = new Intl.NumberFormat("en-US").format(number)
+			
+			return string.replace("-", "–")
+		},
+		getSubSourceDescription: function(subSourceCode) {
+			return this.subSourceDescriptions[subSourceCode]
+		},
+		getSourceGroupsOfYear: function(year = null) {
+			year = year ?? this.getYear(0)
+			return this.getSourcesOfYear(this.sourceGroups, year)
+		},
+		getSourcesOfYear: function(collection, year) {
+			return collection.map(([itemName, years]) => {
+				let pollutants = years.filter(([groupYear, _]) => groupYear == year)[0][1]
+				
+				return [
+					itemName,
+					pollutants,
+					Object.values(pollutants).reduce((acc, curr) => acc + curr, 0)
+				]
+				
+			})
+		},
+		getSubSourcesOfYear: function(year) {
+			
+		},
+		getSubSourcesOfSourceGroup: function(sourceGroupName) {
+			let subSourceCodes = this.subSourcesPerSourceGroup[sourceGroupName]
+			if(!subSourceCodes) {
+				return []
+			}
+			return [...this.subSources].filter(([key, _]) => subSourceCodes.includes(key))
+		},
+		getValuesOfYear: function(map, year) {
+			return map.find(([needleYear, _]) => needleYear == year)[1]
 		}
 	})
 	
-	$: cleanedTrendValues = trendLineValues.filter(val => Math.abs(val) != Infinity)
-	let meanTrend = tweened(0, {
-		duration: 600,
-		easing: cubicOut
-	})
+	setContext("store", store)
 	
-	$: {
-		meanTrend.set(cleanedTrendValues.reduce((acc, curr) => acc + curr)/cleanedTrendValues.length)
+	let initialized = false
+	
+	var currentYear = 15
+
+	async function init() {
+		let reshapeGroupedItems = (groupedItemsArray) => {
+			return groupedItemsArray.map(([sourceGroupName, [...sourceGroupYears]]) => {
+				let yearData = sourceGroupYears.map(([year, data]) => {
+					let reshapedData = Object.fromEntries(
+						Object.entries(data[0]).filter(
+							([key, _]) => $store.pollutantNames.includes(key)
+						).map(
+							([key, value]) => {
+							return [key, parseFloat(value)]
+						})
+					)
+					return [year, reshapedData]
+				})
+				
+				return [sourceGroupName, yearData]
+			})
+		}
+		
+		
+		$store.pollutants = await d3.csv("./pollutantsSum.csv").then(d => {
+			
+			let grouped = [...d3.group(d, d => d.pollutant)]
+			
+			let reshape = grouped.map(([pollutantName, years]) => {
+				return [pollutantName, years.map(year => [year.year, parseFloat(year.amount)])]
+			})
+			return reshape
+		})
+		
+		const fetchSourceGroupsSum = await d3.csv("./sourceGroupsSum.csv")
+		
+		const groupedSourceGroupsSum = [...d3.group(fetchSourceGroupsSum, d => d.index, d => d.year)]
+		
+		$store.sourceGroups = reshapeGroupedItems(groupedSourceGroupsSum)
+		
+		
+		const fetchSubSources = await d3.csv("./subSourcesSum.csv")
+		
+		const groupedSubSources = [...d3.group(fetchSubSources, d => d.code, d => d.year)]
+		
+		$store.subSources = reshapeGroupedItems(groupedSubSources)
+		
+		
+		const fetchSubSourceDescriptions = await d3.json("./subSourcesDescriptions.json").then(d => {
+			return Object.fromEntries(
+				Object.entries(d).map(([key, value]) => {
+					return [key, value[0]]
+				})
+			)
+		})
+		
+		$store.subSourceDescriptions = fetchSubSourceDescriptions
+		
+		
+		const fetchSubSourcesPerSourceGroup = await d3.json("./subSourcesPerSourceGroup.json")
+		
+		$store.subSourcesPerSourceGroup = fetchSubSourcesPerSourceGroup
+		
+		return true
 	}
 
 	onMount(async () => {
-		data = await d3.csv("./SummedData.csv").then(d => {
-			return d
-		})
-
-		pollutantsData = pollutants.map(name => {
-			
-			let pollutantData = data.filter(d => {
-				return d[""] == name
-			})[0]
-			
-			let sorted = years.map(year => pollutantData[year])
-			
-			return sorted
-		})
-		
-		console.log(pollutantsData, data)
-	
-	})
-	
-	$: getMaxValue = () => {
-		if(pollutantsData.length < 1) {
-			return 0
-		}
-		
-		let pollutantMaxes = pollutantsData.map(pollutant => Math.max(...pollutant))
-		
-		return Math.max(...pollutantMaxes)
-	}
-	
-	$: getMinValue = () => {
-		if(pollutantsData.length < 1) {
-			return 0
-		}
-		
-		let pollutantMaxes = pollutantsData.map(pollutant => Math.min(...pollutant.filter(x => x > 0)))
-				
-		return Math.min(...pollutantMaxes)
-	}
-	
-	$: pollutantValues = pollutants.map((name, i) => {
-		if(pollutantsData.length > 0) {
-			return years.map((yearNumber, y) => {
-				return Number(pollutantsData[i][y])
-			})				
-		}
-	})
-	
-	$: console.log("poll vals:", pollutantValues)
-	$: xScale = d3.scaleLinear().domain([0, 100]).range([0, width - 210])
-	$: yScale = d3.scaleLinear().domain([-63, 10]).range([500, 0])
-	$: sizeScale = d3.scaleSqrt().domain([getMinValue(), getMaxValue()]).range([5, 80])
-	
-	$: console.log(getMinValue(), getMaxValue())
-	
-	const axisLabels = {
-		x: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-		y: [10, 0, -10, -20, -30, -40, -50]
-	}
-	
-	$: scales = {
-		x: xScale,
-		y: yScale,
-		size: sizeScale
-	}
-	
-	let maxLabel = {
-		xMin: Math.min(...axisLabels.x),
-		xMax: Math.max(...axisLabels.x),
-		yMin: Math.min(...axisLabels.y),
-		yMax: Math.max(...axisLabels.y),
-	}
-	
-	function getArraySum(array = []) {
-		return array.reduce((a, b) => parseFloat(a) + parseFloat(b), 0.0)
-	}
-	
-	const niceNumbers = new Intl.NumberFormat("en-US")
-
-	
-	$: getOrderedPollutants = () => {
-		let mapped = pollutants.map((name, i) => {
-			return {
-				name: name,
-				i: i
-			}
-		})
-		return mapped
-		// let sizes = mapped.map(pollutant => getPollutantValue(pollutant.i))
-		// return mapped.sort((a, b) => {
-		// 	return sizes[a.i] > sizes[b.i]
-		// })
-	}
-	
-	const radius = 200
-	
-	const ribbonGenerator = d3.ribbon().radius(radius);
-
-	$: pollutantsComponentData = pollutants.map((pollutant, i) => {
-		let values = pollutantValues[i]
-
-		return {
-			scale: {
-				x: xScale,
-				y: yScale,
-				size: sizeScale
-			},
-			year: currentYear,
-			values: values,
-			name: pollutant,
-			color: pollutantColors[i],
-			textColor: "#202020",
-			borderColor: "#101010"
-		}
-	})
-	
-	const linkGenerator = d3.linkVertical()
-		.x(function(d) {
-			return d.x;
-		})
-		.y(function(d) {
-			return d.y;
-		});
-	
-	$: links = sources.map((source, i) => {
-		let target = {
-			x: i * 100,
-			y: 0
-		}
-		return pollutantPositions.map(position => {
-			let data = {
-				target: target,
-				source: position
-			}
-			return linkGenerator(data)
+		await init().then(() => {
+			initialized = true
 		})
 	})
-	  
-	function newLink(d) {
-		let [source, target] = [d.source, d.target]
-		
-		let cu = .2
-		
-		let yi = d3.interpolateNumber(d.target.y, d.source.y)
-		
-		return	"M" + source.x + "," + source.y + " " +
-				"C" + source.x + "," + (source.y - yi(cu)) + " " +
-					  target.x + "," + (target.y + yi(cu)) + " " +
-					  target.x + "," + target.y + " " +
-				"L" + (target.x + target.width) + "," + target.y + " " +
-				"C" + (target.x + target.width) + "," + (target.y + yi(cu)) + " " +
-			  		  (source.x + source.width) + "," + (source.y - yi(cu)) + " " +
-			  		  (source.x + source.width) + "," + source.y + " " +
-				"L" + source.x + "," + source.y + " "
-					  
-	}
 	
-	function getConnection (pollutantPosition, sourcePosition) {
-
-		let newLinkData = {
-			source: {
-				x: sourcePosition.x,
-				y: sourcePosition.y,
-				width: 20,
-			},
-			target: {
-				x: pollutantPosition.x,
-				y: pollutantPosition.y,
-				width: 1
-			}
-		}
-		
-		return newLink(newLinkData)
-	}
-	
-	function getSourcePosition(i) {
-		return {
-			x: xScale((maxLabel.xMax / sources.length) * i),
-			y: yScale(maxLabel.yMin) + 100
-		}
-	}
-	
-	function getPollutantConnectionPoint(i, j) {
-		let sourcePosition = getSourcePosition(i)
-		return {
-			x: sourcePosition.x + j * 20,
-			y: sourcePosition.y
-		}
-	}
 </script>
 
 <style>
-.axis-grid--horizontal, .axis-grid--vertical {
-	stroke: #f4f4f4;
-}
-
-text {
-	fill: #d0d0d0;
-	font-family: "Merriweather";
-	font-weight: 200;
-	font-size: 0.8rem;
-}
-
-.axis-grid--horizontal.zero {
-	stroke: #d9d9d9;
-}
-
-.axis-grid--horizontal.trend {
-	stroke: red;
-	stroke-width: 3px;
-	opacity: .1;
-}
-
-.source__name {
-	font-weight: 500;
-	fill: white;
-}
-
-.source__block {
-	fill: #d9d9d9;
-}
-.connection {
-	fill: black;
-	stroke: none;
-/* 	fill: none; */
-/* 	stroke: #f4f4f4; */
-/* 	stroke-width: 2; */
-	opacity: 0.03;
-}
-
 .flex {
-	display: flex
+	display: flex;
+	/* flex-direction: column; */
+	/* max-width: 40rem; */
+	margin: 0 4rem 0 min(8.125rem, calc(70% * .125));
+	/* align-items: center; */
+	align-items: baseline;
+	position: relative;
+	justify-content: space-between;
+	gap: 2rem;
 }
 
-.pollutant-information {
-	font-family: "Merriweather";
-	font-size: .9rem;
-	line-height: 1.6;
-	width: 25rem;
-	background: #F6F6F6;
-	padding: 1rem;
+
+p {
+	line-height: 1.7;
+	max-width: 28rem;
+	display: block;
+	box-sizing: border-box;
+	/* margin-left: 4rem; */
+	font-variant-numeric: oldstyle-nums;
+	margin: .5rem 0 1rem 0;
 }
 
-.pollutant-information p {
-	margin: 1rem 0 2.5rem;
+p a {
+	color: var(--colorTextEm);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	text-decoration-color:  var(--colorBorder);
+	position: relative;
 }
 
-.pollutant-information h1 {
-	font-size: 1.5rem;
+p a:hover {
+	color: var(--colorPrimary);
 }
 
-.pollutant-information h2 {
+.source {
+	font-style: italic;
+}
+.info-text, .source {
+	font-size: .8rem;
+	color: var(--colorTextMuted);
+}
+.graphs-wrapper {
+	background: var(--colorBackgroundLight);
+	/* height: 200vh; */
+}
+
+.graphs-wrapper :global(*) {
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+h1 .subtitle {
+	color: var(--colorPrimary);
+	font-style: italic;
+	/* font-variant-numeric: oldstyle-nums; */
+	font-weight: 600;
+	font-size: 1.6rem;
+}
+h1 {
+	margin-top: 10rem;
+	display: flex;
+	flex-direction: column;
+	line-height: 1.2;
+	font-size: 2rem;
+}
+.intro-wrapper {
+	z-index: 10;
+	position: sticky;
+	top: calc(var(--intro-height) + 6rem);
+	/* padding-top: 100%; */
+	/* transform: translateY(calc(-100% + 6rem)); */
+	/* outline: 100px solid red; */
+}
+
+.flex > .right, .flex > .left {
+	display: flex;
+	flex-direction: column;
+}
+
+.right {
+	flex: 10 4;
+	align-items: flex-end;
+}
+.left {
+	flex: 16 10;
+}
+
+.credits {
+	font-size: .8rem;
+	color: var(--colorTextMuted);
+	text-align: right;
+	font-style: italic;
+	margin-left: 0;
+}
+.seperator {
+	height: 1px;
+	width: 30%;
+	/* margin-left: 4rem; */
+	margin: 1rem 0;
+	background: var(--colorBorder);
+}
+
+.title-subline {
 	font-size: 1.1rem;
-	margin: 1rem 0 .5rem;
 }
-
 </style>
-
-<h1>DEMO</h1>
-
-
-<input type="range" min="0" max="{years.length-1}" bind:value="{currentYear}">
-
-<pre>
-	{years[currentYear]}
-</pre>
-
-<div class="flex">
-	<div class="graph-wrapper">
-		
-		{#if pollutantsData.length > 0}
-			<svg {width} {height}>
-				<g transform="translate(100, 40)">
-					{#each sources as source, i}
-						{#each pollutantPositions as connection, j}
-							<path class="connection" d={getConnection(connection, getPollutantConnectionPoint(i, j))}></path>
-						{/each}
-						<g transform="translate({getSourcePosition(i).x}, {getSourcePosition(i).y})">
-							<rect class="source__block" x="5" width="{xScale(maxLabel.xMax / sources.length) - 10}" height="20" rx="2" />
-							<text class="source__name" y="10" x="{xScale((maxLabel.xMax / sources.length) / 2)}" alignment-baseline="central" text-anchor="middle">
-								{source}
-							</text>
-						</g>
-					{/each}
-					
-					<text transform="rotate(-90) translate({yScale(40)}, -70)" text-anchor="middle">Change per year</text>
-					<text transform="translate({xScale(50)}, {yScale(maxLabel.yMin) + 60})" text-anchor="middle">Change to base year</text>
-					
-					<text class="trend" x="{xScale(maxLabel.xMax) + 10}" y="{yScale($meanTrend)}" alignment-baseline="central" text-anchor="left">Trend per year</text>
-					
-					<line class="axis-grid--horizontal trend" x1="{xScale(maxLabel.xMin)}" y1="{yScale($meanTrend)}" x2="{xScale(maxLabel.xMax)}" y2="{yScale($meanTrend)}"></line>
-				{#each axisLabels.y as label}
-					<line class="axis-grid--horizontal {label == 0 ? 'zero' : ''}" x1="{xScale(0)}" y1="{yScale(label)}" x2="{xScale(maxLabel.xMax)}" y2="{yScale(label)}"></line>
-					<text class="axis-label--horizontal" x="-10" y="{yScale(label)}" text-anchor="end" alignment-baseline="central">{niceNumbers.format(label)} %</text>
-				{/each}
-				{#each axisLabels.x as label}
-					<line class="axis-grid--vertical" x1="{xScale(label)}" y1="{yScale(maxLabel.yMax)}" x2="{xScale(label)}" y2="{yScale(maxLabel.yMin)}"></line>
-					<text class="axis-label--vertical" x="{xScale(label)}" y="{yScale(maxLabel.yMin) + 20}" text-anchor="middle">{niceNumbers.format(label)} %</text>
-				{/each}
+<div class="page">
+	
+	<div class="intro-wrapper" bind:clientHeight={introHeight} style="--intro-height: {introHeight*-1}px">
+		<Background></Background>
+		<div class="flex">
+			<div class="left">
+				<h1>
+					<span class="title">
+						Visualizing Annual Air Emissions
+					</span>
+					<span class="subtitle">
+						Germany 1990–2019
+					</span>
+				</h1>
+				<p class="title-subline">
+					Vizualizing Air Emissinos <a href="https://cdr.eionet.europa.eu/de/un/clrtap/inventories/envyb590q/overview" target="_blank">Data reported to the European Environment Agency (EEA)</a> by the German Environment Agency (<a href="https://www.umweltbundesamt.de" target="_blank">Umweltbundesamt</a>) on February 2021.
+				</p>
+				<div class="seperator"></div>
+				<p>
+					Most Europeans live in areas, especially cities, where air pollution can reach high levels. Both short- and long-term exposure to air pollution can lead to a wide range of diseases, including stroke, chronic obstructive pulmonary disease, trachea, bronchus and lung cancers, aggravated asthma and lower respiratory infections. The <a href="https://www.euro.who.int/en/health-topics/environment-and-health/air-quality/publications/2016/who-expert-consultation-available-evidence-for-the-future-update-of-the-who-global-air-quality-guidelines-aqgs-2016" target="_blank">World Health Organization</a> (WHO) provides evidence of links between exposure to air pollution and type 2 diabetes, obesity, systemic inflammation, Alzheimer’s disease and dementia. The <a href="https://www.iarc.fr/news-events/iarc-outdoor-air-pollution-a-leading-environmental-cause-of-cancer-deaths/" target="_blank">International Agency for Research on Cancer</a> has classified air pollution, in particular PM2.5, as a leading cause of cancer. A recent <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6904854/" target="_blank">global review</a> found that <em>chronic exposure can affect every organ in the body</em>, complicating and exacerbating existing health conditions.
+				</p>
 				
-				{#each getOrderedPollutants() as pollutant, i}
-						<PollutantBubble
-							on:click={() => alert(1)}
-							scales={scales}
-							year={currentYear} 
-							bind:trend={trendLineValues[i]}
-							bind:pollutantPosition={pollutantPositions[i]}
-							pollutant={pollutantsComponentData[i]}
-						></PollutantBubble>
-				{/each}
-			</g>
-		</svg>
+				<p>
+					The <a href="https://www.eea.europa.eu/publications/health-risks-of-air-pollution/health-impacts-of-air-pollution" target="_blank">EEA estimates that</a>, in 2019, approximately 307,000 premature deaths were attributable to PM2.5 in the 27 EU Member States. Nitrogen dioxide (NO2) was linked to 40,400 premature deaths, and ground-level ozone was linked to 16,800 premature deaths. 
+				</p>
+				<p>
+					In 2021, the World Health Organization (WHO) published <a href="https://apps.who.int/iris/handle/10665/345329" target="_blank">new air quality guidelines</a> to protect human health, updating the <a href="https://www.who.int/publications/i/item/WHO-SDE-PHE-OEH-06.02" target="_blank">2005 air quality guidelines</a> on the basis of a systematic review of the latest scientific evidence of how air pollution damages human health.
+				</p>
+				<p>
+					The European Union (EU) also set <a href="https://ec.europa.eu/environment/air/quality/standards.htm" target="_blank">standards</a> for key air pollutants in the <a href="https://ec.europa.eu/environment/air/quality/existing_leg.htm" target="_blank">ambient air quality directives</a>. Although these values were based on the 2005 WHO air quality guidelines, they also reflect the technical and economic feasibility of their attainment across EU Member States. The EU air quality standards are therefore less demanding than the WHO air quality guidelines.
+				</p>
+				<p class="source">Text Source: <a href="https://www.eea.europa.eu/themes/air/health-impacts-of-air-pollution" target="_blank">Air pollution: how it affects our health</a></p>
+				<p class="info-text">
+					With the slider below you can change the following visualizations and it shows the annual total emissions in the years from 1990 to 2019.
+				</p>
+				
+			</div>
+			<div class="right">
+				<p class="credits">
+					Created by Gustav Neustadt <br>
+					<a href="https://uclab.fh-potsdam.de/advances" target="_blank">»Advances in Data Visualization: Network & Hierarchies«</a><br>
+					by Mark-Jan Bludau<br>
+					Data from <a href="https://cdr.eionet.europa.eu/de/un/clrtap/inventories/envyb590q/overview" target="_blank">European Environment Agency (EEA)</a><br>
+					Font used <a href="https://www.lucasfonts.com/fonts/the-mix" target="_blank">»TheMix« by Luc(as) de Groot</a> <br>
+				</p>
+				
+				<div class="seperator"/>
+					
+				<p class="credits">
+					Other Sources<br>
+					<a href="https://projects.au.dk/mapeire/spatial-modelling/requirements/" target="_blank">GNFR Definiton Table</a> <br>
+					<a href="https://unfccc.int/sites/default/files/resource/AGI%202020_final.pdf" target="_blank">Aggregate information on greenhouse gas emissions […]</a><br>
+					<a href="https://www.eea.europa.eu/sandbox/laura/air-quality-status-briefing-2021" target="_blank">Air Quality Status (EEA)</a><br>
+					<a href="https://www.eea.europa.eu/publications/air-quality-in-europe-2021/health-impacts-of-air-pollution" target="_blank">Health Impacts of Air Pollution (EEA)</a><br>
+				</p>
+				<div class="seperator"/>
+				<p class="credits">
+					Main Tools<br>
+				</p>
+				<p class="credits">
+					Web<br>
+					<a href="https://svelte.dev" target="_blank">Svelte</a> <br>
+					<a href="https://d3js.org" target="_blank">D3</a><br>
+				</p>
+				<p class="credits">
+					Data Refinement<br>
+					<a href="https://www.python.org" target="_blank">Python</a><br>
+					<a href="https://pandas.pydata.org" target="_blank">Python Pandas</a><br>
+					<a href="https://jupyter.org" target="_blank">Jupyter</a><br>
+				</p>
+			</div>
+		</div>
+		{#if initialized}
+			<Header bind:currentYearIndex={currentYear} />
 		{/if}
 	</div>
-
-<div class="pollutant-information">
-	<h1>PM 2.5</h1>
-	<p>
-		It can be caused by human activity: Particulate matter can originate from energy supply and industrial processes, metal and steel production as well as the reloading of bulk material or it can be of natural origin, for example as a result of soil erosion. In agglomerations road traffic is the dominant source.
-	</p>
-	<h2>
-		Health risk
-	</h2>
-	<p>
-		Research studies of the World Health Organisation (WHO) have shown increased occurrence of respiratory and cardiovascular diseases at high particulate matter concentrations. Persons with pre-existing disease are especially vulnerable. Studies have shown a measurable reduction in life expectancy with increasing particulate matter concentrations.
-	</p>
-	<h2>
-		Limit values
-	</h2>
-	<p>
-		Since 1 January 2005 limit values for particulate matter (PM10) for protection of human health are put into force. The daily limit value is 50 µg/m3, not to be exceeded more than 35 times per calendar year. The permitted annual limit value is 40 µg/m3. Information on ambient concentrations of particulate matter and exceedances must be made available to the public as promptly as possible.
-	</p>
 	
-	<a class="information-source">German Federal Environmental Agency →</a>
-</div>
+	
+	<div class="graphs-wrapper">
+		{#if initialized}
+			<PollutantGraph currentYearIndex={currentYear}/>
+		{/if}
+	</div>
 </div>

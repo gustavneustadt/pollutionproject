@@ -1,0 +1,383 @@
+{
+  "1A1a": [
+	"Public electricity%nand heat production"
+  ],
+  "1A1b": [
+	"Petroleum refining"
+  ],
+  "1A1c": [
+	"Manufacture of solid fuels%nand other energy industries"
+  ],
+  "1A2a": [
+	"Stationary combustion%nin manufacturing industries and construction: Iron and steel"
+  ],
+  "1A2b": [
+	"Stationary combustion%nin manufacturing industries and construction: Non-ferrous metals"
+  ],
+  "1A2c": [
+	"Stationary combustion%nin manufacturing industries and construction: Chemicals"
+  ],
+  "1A2d": [
+	"Stationary combustion%nin manufacturing industries and construction: Pulp, Paper and Print"
+  ],
+  "1A2e": [
+	"Stationary combustion%nin manufacturing industries and construction: Food processing, beverages and tobacco"
+  ],
+  "1A2f": [
+	"Stationary combustion%nin manufacturing industries and construction: Non-metallic minerals"
+  ],
+  "1A2gvii": [
+	"Mobile combustion in manufacturing%nindustries and construction"
+  ],
+  "1A2gviii": [
+	"Stationary combustion%nin manufacturing industries and construction: Other"
+  ],
+  "1A3ai(i)": [
+	"International aviation LTO;civil"
+  ],
+  "1A3aii(i)": [
+	"Domestic aviation LTO;civil"
+  ],
+  "1A3bi": [
+	"Road transport: Passenger cars"
+  ],
+  "1A3bii": [
+	"Road transport: Light duty vehicles"
+  ],
+  "1A3biii": [
+	"Road transport: Heavy duty vehicles and buses"
+  ],
+  "1A3biv": [
+	"Road transport: Mopeds & motorcycles"
+  ],
+  "1A3bv": [
+	"Road transport: Gasoline evaporation"
+  ],
+  "1A3bvi": [
+	"Road transport: Automobile tyre and brake wear"
+  ],
+  "1A3bvii": [
+	"Road transport: Automobile road abrasion"
+  ],
+  "1A3c": [
+	"Railways"
+  ],
+  "1A3di(ii)": [
+	"International inland waterways"
+  ],
+  "1A3dii": [
+	"National navigation;shipping"
+  ],
+  "1A3ei": [
+	"Pipeline transport"
+  ],
+  "1A3eii": [
+	"Other"
+  ],
+  "1A4ai": [
+	"Commercial/Institutional: Stationary"
+  ],
+  "1A4aii": [
+	"Commercial/Institutional: Mobile"
+  ],
+  "1A4bi": [
+	"Residential: Stationary"
+  ],
+  "1A4bii": [
+	"Residential: Household and gardening;mobile"
+  ],
+  "1A4ci": [
+	"Agriculture/Forestry/Fishing: Stationary"
+  ],
+  "1A4cii": [
+	"Agriculture/Forestry/Fishing: Off-road vehicles and other machinery"
+  ],
+  "1A4ciii": [
+	"Agriculture/Forestry/Fishing: National fishing"
+  ],
+  "1A5a": [
+	"Other stationary;including military"
+  ],
+  "1A5b": [
+	"Other, Mobile;including military, land based and recreational boats"
+  ],
+  "1B1a": [
+	"Fugitive emission%nfrom solid fuels: Coal mining and handling"
+  ],
+  "1B1b": [
+	"Fugitive emission%nfrom solid fuels: Solid fuel transformation"
+  ],
+  "1B1c": [
+	"Other fugitive emissions%nfrom solid fuels"
+  ],
+  "1B2ai": [
+	"Fugitive emissions oil: Exploration, production, transport"
+  ],
+  "1B2aiv": [
+	"Fugitive emissions oil: Refining and storage"
+  ],
+  "1B2av": [
+	"Distribution of oil products"
+  ],
+  "1B2b": [
+	"Fugitive emissions%nfrom natural gas;exploration, production, processing, transmission,%nstorage, distribution and other"
+  ],
+  "1B2c": [
+	"Venting and flaring;oil, gas, combined oil and gas"
+  ],
+  "1B2d": [
+	"Other fugitive emissions%nfrom energy production"
+  ],
+  "2A1": [
+	"Cement production"
+  ],
+  "2A2": [
+	"Lime production"
+  ],
+  "2A3": [
+	"Glass production"
+  ],
+  "2A5a": [
+	"Quarrying and mining%nof minerals other than coal"
+  ],
+  "2A5b": [
+	"Construction and demolition"
+  ],
+  "2A5c": [
+	"Storage, handling and transport%nof mineral products"
+  ],
+  "2A6": [
+	"Other mineral products"
+  ],
+  "2B1": [
+	"Ammonia production"
+  ],
+  "2B10a": [
+	"Chemical industry: Other"
+  ],
+  "2B10b": [
+	"Storage, handling and transport%nof chemical products"
+  ],
+  "2B2": [
+	"Nitric acid production"
+  ],
+  "2B3": [
+	"Adipic acid production"
+  ],
+  "2B5": [
+	"Carbide production"
+  ],
+  "2B6": [
+	"Titanium dioxide production"
+  ],
+  "2B7": [
+	"Soda ash production"
+  ],
+  "2C1": [
+	"Iron and steel production"
+  ],
+  "2C2": [
+	"Ferroalloys production"
+  ],
+  "2C3": [
+	"Aluminium production"
+  ],
+  "2C4": [
+	"Magnesium production"
+  ],
+  "2C5": [
+	"Lead production"
+  ],
+  "2C6": [
+	"Zinc production"
+  ],
+  "2C7a": [
+	"Copper production"
+  ],
+  "2C7b": [
+	"Nickel production"
+  ],
+  "2C7c": [
+	"Other metal production"
+  ],
+  "2C7d": [
+	"Storage, handling and transport%nof metal products"
+  ],
+  "2D3a": [
+	"Domestic solvent use%nincluding fungicides"
+  ],
+  "2D3b": [
+	"Road paving with asphalt"
+  ],
+  "2D3c": [
+	"Asphalt roofing"
+  ],
+  "2D3d": [
+	"Coating applications"
+  ],
+  "2D3e": [
+	"Degreasing"
+  ],
+  "2D3f": [
+	"Dry cleaning"
+  ],
+  "2D3g": [
+	"Chemical products"
+  ],
+  "2D3h": [
+	"Printing"
+  ],
+  "2D3i": [
+	"Other solvent use"
+  ],
+  "2G": [
+	"Other product use"
+  ],
+  "2H1": [
+	"Pulp and paper industry"
+  ],
+  "2H2": [
+	"Food and beverages industry"
+  ],
+  "2H3": [
+	"Other industrial processes"
+  ],
+  "2I": [
+	"Wood processing"
+  ],
+  "2J": [
+	"Production of POPs"
+  ],
+  "2K": [
+	"Consumption of POPs and heavy metals;e.g. electrical and scientific equipment"
+  ],
+  "2L": [
+	"Other production, consumption,%nstorage, transportation%nor handling of bulk products"
+  ],
+  "3B1a": [
+	"Manure management: Dairy cattle"
+  ],
+  "3B1b": [
+	"Manure management: Non-dairy cattle"
+  ],
+  "3B2": [
+	"Manure management: Sheep"
+  ],
+  "3B3": [
+	"Manure management: Swine"
+  ],
+  "3B4a": [
+	"Manure management: Buffalo"
+  ],
+  "3B4d": [
+	"Manure management: Goats"
+  ],
+  "3B4e": [
+	"Manure management: Horses"
+  ],
+  "3B4f": [
+	"Manure management: Mules and asses"
+  ],
+  "3B4gi": [
+	"Manure management: Laying hens"
+  ],
+  "3B4gii": [
+	"Manure management: Broilers"
+  ],
+  "3B4giii": [
+	"Manure management: Turkeys"
+  ],
+  "3B4giv": [
+	"Manure management: Other poultry"
+  ],
+  "3B4h": [
+	"Manure management: Other animals"
+  ],
+  "3Da1": [
+	"Inorganic N-fertilizers;includes also urea application"
+  ],
+  "3Da2a": [
+	"Animal manure applied to soils"
+  ],
+  "3Da2b": [
+	"Sewage sludge applied to soils"
+  ],
+  "3Da2c": [
+	"Other organic fertilisers%napplied to soils;including compost"
+  ],
+  "3Da3": [
+	"Urine and dung deposited%nby grazing animals"
+  ],
+  "3Da4": [
+	"Crop residues applied to soils"
+  ],
+  "3Db": [
+	"Indirect emissions%nfrom managed soils"
+  ],
+  "3Dc": [
+	"Farm-level agricultural operations%nincluding storage, handling%nand transport of agricultural products"
+  ],
+  "3Dd": [
+	"Off-farm storage, handling%nand transport of bulk%nagricultural products"
+  ],
+  "3De": [
+	"Cultivated crops"
+  ],
+  "3Df": [
+	"Use of pesticides"
+  ],
+  "3F": [
+	"Field burning of agricultural residues"
+  ],
+  "3I": [
+	"Agriculture other"
+  ],
+  "5A": [
+	"Biological treatment of waste: Solid waste disposal on land"
+  ],
+  "5B1": [
+	"Biological treatment of waste: Composting"
+  ],
+  "5B2": [
+	"Biological treatment of waste: Anaerobic digestion at biogas facilities"
+  ],
+  "5C1a": [
+	"Municipal waste incineration"
+  ],
+  "5C1bi": [
+	"Industrial waste incineration"
+  ],
+  "5C1bii": [
+	"Hazardous waste incineration"
+  ],
+  "5C1biii": [
+	"Clinical waste incineration"
+  ],
+  "5C1biv": [
+	"Sewage sludge incineration"
+  ],
+  "5C1bv": [
+	"Cremation"
+  ],
+  "5C1bvi": [
+	"Other waste incineration"
+  ],
+  "5C2": [
+	"Open burning of waste"
+  ],
+  "5D1": [
+	"Domestic wastewater handling"
+  ],
+  "5D2": [
+	"Industrial wastewater handling"
+  ],
+  "5D3": [
+	"Other wastewater handling"
+  ],
+  "5E": [
+	"Other waste"
+  ],
+  "6A": [
+	"Other;included in national total for entire territory"
+  ]
+}
