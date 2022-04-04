@@ -124,7 +124,7 @@
 					style="--leftMargin: {sliderProgress}%"
 				>
 					<span class="year">
-						{currentYear}
+						← {currentYear} →
 					</span>
 					{$store.niceNumbers(totalPollutionAmount.toFixed(0))} kt
 				</div>

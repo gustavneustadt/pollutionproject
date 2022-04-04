@@ -256,8 +256,8 @@
 .graphic-wrapper {
 	position: relative;
 	left: -.2rem;
-	width: 3rem;
-	height: 3rem;
+	width: 10rem;
+	height: 10rem;
 	box-sizing: border-box;
 	padding: .25rem;
 	background: var(--color);

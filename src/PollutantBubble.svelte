@@ -298,6 +298,7 @@ transform="translate({$pos.x}, {$pos.y})" opacity={$opacity}
 bind:this={element}
 on:click|stopPropagation={() => activate()}
 >
+
 	<circle cx="0" cy="0" r="{$size}" class="size"></circle>
 	<circle cx="0" cy="0" r="{scales.size(baseValue)}" stroke-dasharray="5,10" on:click={clickEvent} class="base-size"></circle>
 	<text y={textPos.y} x={textPos.x} class="pollutant--name" text-anchor="middle">{pollutant.name}</text>

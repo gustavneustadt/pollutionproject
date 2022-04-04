@@ -294,6 +294,10 @@
 	.bar {
 		fill: var(--color);
 		cursor: pointer;
+		transition: .1s opacity ease;
+	}
+	.bar:hover {
+		opacity: .7;
 	}
 	.wrapper-group {
 		cursor: grab;
@@ -343,7 +347,12 @@
 </style>
 <g class="wrapper-group" transform="translate(0, 300)" 
 on:mouseenter={() => mouseOver(true)} on:mouseleave={() => mouseOver(false)}>
-<text x={xScale(50)} y="-10" text-anchor="middle" class="drag-hint">← drag, scroll or click☟ →</text>
+{#if totalSubSourceTons > 0}
+	<text x={xScale(50)} y="-10" text-anchor="middle" class="drag-hint">← drag, scroll or select☟ →</text>
+{/if}
+{#if totalSubSourceTons == 0}
+	<text x={xScale(50)} y="100" text-anchor="middle" class="drag-hint">← drag or scroll →</text>
+{/if}
 	<g bind:this={group}>
 		{#each $subSourcesDataTweened as subSource, i}
 			<g 
@@ -398,7 +407,6 @@ on:mouseenter={() => mouseOver(true)} on:mouseleave={() => mouseOver(false)}>
 				<g transform="translate(-150, 20)">
 					
 					<text 
-					fill="black" text-anchor="left"
 					y="0"
 					class="source-identifier"
 					>

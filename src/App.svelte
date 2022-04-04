@@ -4,8 +4,6 @@
 	import { onMount, setContext, getContext } from 'svelte'
 	import { writable } from 'svelte/store'
 	import PollutantBubble from './PollutantBubble.svelte'
-	import PollutantSourceGroup from './PollutantSourceGroup.svelte'
-	import PollutantSources from './PollutantSources.svelte'
 	import Header from './Header.svelte'
 	import Background from './Background.svelte'
 	
@@ -234,13 +232,15 @@ h1 .subtitle {
 	color: var(--colorPrimary);
 	font-style: italic;
 	/* font-variant-numeric: oldstyle-nums; */
-	/* font-weight: 800; */
+	font-weight: 600;
+	font-size: 1.6rem;
 }
 h1 {
 	margin-top: 10rem;
 	display: flex;
 	flex-direction: column;
 	line-height: 1.2;
+	font-size: 2rem;
 }
 .intro-wrapper {
 	z-index: 10;
@@ -291,10 +291,10 @@ h1 {
 			<div class="left">
 				<h1>
 					<span class="title">
-						Visualizing Air Emissions Data
+						Visualizing Annual Air Emissions
 					</span>
 					<span class="subtitle">
-						1990–2019 Germany
+						Germany 1990–2019
 					</span>
 				</h1>
 				<p class="title-subline">
@@ -344,13 +344,14 @@ h1 {
 				</p>
 				<p class="credits">
 					Web<br>
-					<a href="https://projects.au.dk/mapeire/spatial-modelling/requirements/" target="_blank">Svelte</a> <br>
-					<a href="https://unfccc.int/sites/default/files/resource/AGI%202020_final.pdf" target="_blank">D3</a><br>
+					<a href="https://svelte.dev" target="_blank">Svelte</a> <br>
+					<a href="https://d3js.org" target="_blank">D3</a><br>
 				</p>
 				<p class="credits">
 					Data Refinement<br>
-					<a href="https://www.eea.europa.eu/sandbox/laura/air-quality-status-briefing-2021" target="_blank">Python</a><br>
-					<a href="https://www.eea.europa.eu/publications/air-quality-in-europe-2021/health-impacts-of-air-pollution" target="_blank">Jupyter</a><br>
+					<a href="https://www.python.org" target="_blank">Python</a><br>
+					<a href="https://pandas.pydata.org" target="_blank">Python Pandas</a><br>
+					<a href="https://jupyter.org" target="_blank">Jupyter</a><br>
 				</p>
 			</div>
 		</div>

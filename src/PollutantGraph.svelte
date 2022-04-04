@@ -5,8 +5,6 @@
 	
 	import SourceGraph from './SourceGraph.svelte'
 	import PollutantBubble from './PollutantBubble.svelte'
-	import PollutantSourceGroup from './PollutantSourceGroup.svelte'
-	import PollutantSources from './PollutantSources.svelte'
 	import PollutantInfoPanel from './PollutantInfoPanel.svelte'
 
 	import { tweened } from 'svelte/motion';

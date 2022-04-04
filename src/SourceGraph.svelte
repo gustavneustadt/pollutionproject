@@ -12,7 +12,7 @@
 
 	let store = getContext("store")
 	let width = 800
-	let height = 1000
+	let height = 700
 	
 	export let currentYear
 	export let currentActivePollutant
@@ -214,9 +214,9 @@
 	}
 	
 	let userActiveSourceGroup = null
-	// $: activeSourceGroup = userActiveSourceGroup ?? [...percentagePerSourceGroup].sort((a, b) => a[1] < b[1])[0][0]
+
 	$: activeSourceGroup = userActiveSourceGroup
-	
+
 	$: activeSourceGroupData = sourceGroupsData.find(group => group.name == activeSourceGroup)
 	
 	
@@ -412,6 +412,7 @@
 	
 	.bar {
 		fill: var(--color);
+		transition: .1s opacity ease, .1s fill ease;
 	}
 	
 	.source-group:hover .bar, .source-group.active .bar {
@@ -558,6 +559,13 @@
 	.pollutant-wrapper .pollutant {
 		width: 7.5rem;
 	}
+	
+	.click-hint {
+		font-feature-settings: "smcp";
+		letter-spacing: .04rem;
+		fill: var(--colorTextMuted);
+		font-size: .9rem;
+	}
 </style>
 
 <div class="wrapper" id="sources"
@@ -692,7 +700,11 @@
 					</g>
 			{/each}
 			
-			{#if anySourceGroupActive && activeSourceGroupData.amount > 0} 
+			{#if !anySourceGroupActive}
+				<text class="click-hint" x={xScale(50)} y={160} text-anchor="middle">select☝</text>
+			{/if}
+			
+			{#if anySourceGroupActive} 
 				<g transform="translate({xScale(50 - ($subGroupTotalWidth * 50))}, 0) scale({$subGroupTotalWidth}, 1)">
 				
 					<SourceGraphSubSources 
