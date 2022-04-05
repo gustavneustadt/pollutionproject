@@ -4,14 +4,14 @@
 	import forceBoundary from 'd3-force-boundary'
 	import chroma from "chroma-js"
 	import { onMount, getContext } from 'svelte'
-	import { unit } from "mathjs"
+	import { unit, round } from "mathjs"
 	
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
 	import SourceGraphSubSources from './SourceGraphSubSources.svelte'
 
 	let store = getContext("store")
-	let width = 800
+	let width = 700
 	let height = 700
 	
 	export let currentYear
@@ -55,8 +55,8 @@
 	
 	$: sourceGroupCount = percentagePerSourceGroup.length ?? 0
 	// $: console.log({percentagePerSourceGroup, percentagePerSourceGroupCumulative})
-	
-	const xScale = d3.scaleLinear().domain([0, 100]).range([0, width - 120])
+	let xScale = () => 0
+	$: xScale = d3.scaleLinear().domain([0, 100]).range([0, width - 120])
 	$: colorScale = d3.scaleLinear()
 	.domain([0, sourceGroupCount / 2, sourceGroupCount - 1])
 	.range(["#A5CBDD", "#E096C2", "#FFE591"])
@@ -75,8 +75,9 @@
 	
 
 	let sourceGroupDataTweened = tweened(null, {
-			easing: cubicOut
-		})
+		easing: cubicOut,
+		duration: 500
+	})
 	
 	
 	
@@ -149,6 +150,7 @@
 	
 	$: {
 		percentagePerSourceGroup
+		width
 		cancelAnimation()
 		startAnimation()
 	}
@@ -172,14 +174,20 @@
 	}
 	
 	
-	
+	function getBorderForce(x, width, middle, steepness = 10) {
+		let result = Math.pow(((x-middle)/(width/2)), steepness)
+		
+		return round(result, 3)
+	}
 	
 	$: labelSimulation = d3.forceSimulation()
-		.force("boundary", forceBoundary(-30, -40, xScale(100), 80).strength(0.04))
+		// .force("boundary", forceBoundary(-30, -40, xScale(100), 80).strength(0.04))
 		.force("forceX", d3.forceX().x(d => d.forceX).strength(0.02))
-		.force("forceY", d3.forceY().y(d => d.forceY).strength(0.05))
-		// .force("center", d3.forceCenter().x(xScale(50)).strength(1))
-		// .force("charge", d3.forceManyBody().strength(-100))
+		.force("center", d3.forceX().x(_ => xScale(50)).strength(0.02))
+		.force("forceY", d3.forceY().y(d => d.forceY).strength(0.1))
+		// .force("centering", d3.forceX(_ => xScale(50)).strength(d => {
+		// 	return getBorderForce(d.x, xScale(100), xScale(50)) / 100
+		// }))
 		.force("collision", bboxCollide(d => {
 			let hw = d.width > 0 ? d.width / 2 : 0
 			return [[(hw + 3) * -1, -14], [hw + 3, 14]]
@@ -224,7 +232,8 @@
 	$: {
 		activeSourceGroup
 		activeSourceGroupDataTweened = tweened(null, {
-			easing: cubicOut
+			easing: cubicOut,
+			duration: 500
 		})
 	}
 	
@@ -509,7 +518,7 @@
 	}
 	
 	.left-padding {
-		margin-left: 12.5%;
+		margin-left: 100px;
 	}
 	
 	h3 .year, h3 .amount {
@@ -528,10 +537,11 @@
 	.pollutant-select-wrapper {
 		display: flex;
 		gap: .5rem;
-		margin-left: 12.5%;
+		margin-left: 100px;
 		margin-top: 1rem;
 		z-index: 0;
 		position: relative;
+		flex-wrap: wrap;
 		/* overflow: hidden; */
 	}
 	
@@ -566,10 +576,17 @@
 		fill: var(--colorTextMuted);
 		font-size: .9rem;
 	}
+	
+	@media screen and (max-width: 680px) {
+		h3, .pollutant-select-wrapper  {
+			margin-left: 1rem !important;
+		}
+	}
 </style>
 
 <div class="wrapper" id="sources"
 	class:deactivated={!pollutantDataForCurrentYear}
+	bind:clientWidth={width}
 >
 	<h3 class="left-padding">
 		<span class="year">

@@ -12,7 +12,7 @@
 	let scales = pollutant.scale
 	export let activePollutant
 	export let trend
-	
+	export let xScale
 	export let pollutantPosition
 	
 	
@@ -68,6 +68,7 @@
 	
 	
 	$: {
+		xScale
 		pos.set(calcPosition(year))
 		size.set(scales.size(currentValue))
 		opacity.set(currentValue > 0 ? 1 : 0)
@@ -148,7 +149,7 @@
 		
 		if(firstYear >= year) {
 			return {
-				x: scales.x(100),
+				x: xScale(100),
 				y: scales.y(0.00)
 			}
 		}
@@ -163,7 +164,7 @@
 		let x = (currentValue / baseValue) * 100
 		
 		return {
-			x: scales.x(x) || 0.00,
+			x: xScale(x) || 0.00,
 			y: scales.y(y) || 0.00
 		}
 	}

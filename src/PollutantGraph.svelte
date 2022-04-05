@@ -24,7 +24,7 @@
 	let subSourcesData = $store.subSources
 
 	
-	const width = 800
+	let width = 800
 	const height = 600
 	
 	let initialized = false
@@ -242,10 +242,11 @@
 	}
 	.graph-wrapper {
 		width: 70%;
-		max-width: 65rem;
+		/* max-width: 65rem; */
 		height: 100%;
 		position: relative;
 	}
+	
 	.trend-line {
 		stroke: var(--colorTextMutedLight);
 		fill: none;
@@ -269,36 +270,49 @@
 		justify-content: space-between;
 	}
 	
+	
 	.legend {
 		width: 30%;
 		margin: 1rem 0 0 10%;
 	}
 	h2 {
-		margin: 0rem 0 0rem 12.5%;
+		margin: 0rem 0 0rem 100px;
 		color: var(--colorTextMuted);
 	}
 	
 	h2:first-of-type {
-		margin: 4rem 0 0rem 12.5%;
+		margin: 4rem 0 0rem 100px;
 	}
 	.hint {
 		font-size: .9rem;
-		padding-left: 12.5%;
+		margin-left: 100px;
 		color: var(--colorTextMuted);
+	}
+	@media screen and (max-width: 680px) {
+		.wrapper { 
+			flex-direction: column;
+		}
+		.graph-wrapper {
+			width: 100%;
+		 }
+		
+		h2, .padding-left, .hint {
+			margin-left: 1rem !important;
+		}
 	}
 </style>
 
 
 <div class="wrapper">
-	<div class="graph-wrapper">
+	<div class="graph-wrapper" bind:clientWidth={width}>
 		<h2>Annual Air Emissions of Germany</h2>
-		<span class="hint">
+		<p class="hint">
 			{#if !activePollutant}
 				Click on a pollutant bubble to get more information
 			{:else}
 				Click anywhere on the graph to see all the bubbles again
 			{/if}
-		</span>
+		</p>
 		
 			<svg class="graph" viewBox="0 0 {width} {height}" 
 			on:click={() => {activePollutant = null}}
@@ -339,6 +353,7 @@
 							bind:pollutantPosition={pollutantPositions[i]}
 							bind:trend={trendLineValues[i]}
 							pollutant={pollutant}
+							xScale={xScale}
 						></PollutantBubble>
 				{/each}
 			</g>

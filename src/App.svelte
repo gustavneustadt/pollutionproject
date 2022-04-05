@@ -178,12 +178,32 @@
 	display: flex;
 	/* flex-direction: column; */
 	/* max-width: 40rem; */
-	margin: 0 4rem 0 min(8.125rem, calc(70% * .125));
+	margin: 0 4rem 0 100px;
 	/* align-items: center; */
 	align-items: baseline;
 	position: relative;
 	justify-content: space-between;
 	gap: 2rem;
+}
+
+@media screen and (max-width: 940px) {
+	.flex {
+		flex-direction: column;
+	}
+	.flex > .right {
+		align-items: flex-start;
+	}
+	.flex > .right .credits {
+		text-align: left;
+	}
+}
+
+@media screen and (max-width: 570px) {
+	.flex {
+		flex-direction: column;
+		margin: 0 1rem;
+	}
+
 }
 
 

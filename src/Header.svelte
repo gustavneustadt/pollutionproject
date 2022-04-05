@@ -55,11 +55,13 @@
 		align-items: baseline;
 		justify-content: center;
 		gap: 1rem;
-		padding: 0 0 .5rem;
+		width: 100%;
+		padding: 0 1rem .5rem;
 	}
 	.slider-wrapper {
-		width: 30rem;
-		/* max-width: 30rem; */
+		/* width: 50%; */
+		flex: 5 1;
+		max-width: 30rem;
 		position: relative;
 	}
 	

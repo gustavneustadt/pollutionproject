@@ -227,6 +227,8 @@
 </script>
 
 <style>
+
+
 .wrapper {
 	width: 30%;
 	/* max-width: 20rem; */
@@ -235,6 +237,15 @@
 	flex-direction: column;
 	background: var(--colorBackground);
 	border-left: 2px solid var(--colorBorder);
+}
+@media screen and (max-width: 680px) {
+	.wrapper { 
+		width: 100%;
+		border-top:2px solid var(--colorBorder);
+	}
+	.sticky-wrapper { 
+		position: relative;
+	}
 }
 
 .sticky-wrapper {
