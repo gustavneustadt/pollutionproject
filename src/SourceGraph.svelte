@@ -149,7 +149,7 @@
 	let tickAnimation = null
 	
 	$: {
-		percentagePerSourceGroup
+		sourceGroupsData
 		width
 		cancelAnimation()
 		startAnimation()
@@ -166,7 +166,7 @@
 		labelSimulation.tick()
 		renderedLabels = [ ... sourceLabelPositions]
 
-		if(labelSimulation.alpha() < 0.3) {
+		if(labelSimulation.alpha() < 0.01) {
 			cancelAnimation()
 			return
 		}
@@ -181,27 +181,25 @@
 	}
 	
 	$: labelSimulation = d3.forceSimulation()
-		// .force("boundary", forceBoundary(-30, -40, xScale(100), 80).strength(0.04))
-		.force("forceX", d3.forceX().x(d => d.forceX).strength(0.02))
-		.force("center", d3.forceX().x(_ => xScale(50)).strength(0.02))
-		.force("forceY", d3.forceY().y(d => d.forceY).strength(0.1))
-		// .force("centering", d3.forceX(_ => xScale(50)).strength(d => {
-		// 	return getBorderForce(d.x, xScale(100), xScale(50)) / 100
-		// }))
+		.force("boundary", forceBoundary(-30, -40, xScale(100), 80).strength(0.04))
+		.force("forceX", d3.forceX().x(d => d.forceX).strength(0.1))
+		// .force("center", d3.forceX().x(_ => xScale(50)).strength(0.02))
+		.force("forceY", d3.forceY().y(d => d.forceY).strength(0.01))
+		// .force('charge', d3.forceManyBody().strength(-20))
 		.force("collision", bboxCollide(d => {
 			let hw = d.width > 0 ? d.width / 2 : 0
-			return [[(hw + 3) * -1, -14], [hw + 3, 14]]
+			return [[(hw) * -1, -14], [hw, 14]]
 		}).strength(.05))
+		// .force("edges", edgesCollision)
 		.nodes(sourceLabelPositions)
-	
-	
+
 	const labelRenames = {
 		"AgriLivestock": "Agricultural Livestock",
 		"AgriOther": "Agriculture",
 		"Aviation": "Aviation",
 		"Fugitive": "Fugitive Emissions",
 		"Industry": "Industry",
-		"Offroad": "Non-Road Traffic",
+		"Offroad": "Non-Road Transport",
 		"OtherStationaryComb": "Small Stationary Combustion",
 		"PublicPower": "Energy Production",
 		"RoadTransport": "Road Traffic",
@@ -628,7 +626,7 @@
 		No data is available for the selected year {currentYear}. Go to <b>{firstYear}</b>
 	</div>
 	<svg bind:this={graph} on:wheel={handleWheel} class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
-		<g transform="translate(100, 30)">		
+		<g transform="translate(100, 80)">		
 			{#if activeSourceGroupData}
 					{#if activeSourceGroupData.amount > 0}
 						<path class="sub-source-connection" d={subSourcePath} fill="black"/>			
