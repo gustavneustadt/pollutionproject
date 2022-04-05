@@ -151,7 +151,9 @@
 	$: {
 		sourceGroupsData
 		width
+		activeSourceGroup
 		cancelAnimation()
+		labelSimulation.alpha(1)
 		startAnimation()
 	}
 	function startAnimation() {
@@ -181,7 +183,7 @@
 	}
 	
 	$: labelSimulation = d3.forceSimulation()
-		.force("boundary", forceBoundary(-30, -40, xScale(100), 80).strength(0.04))
+		.force("boundary", forceBoundary(-30, -40, xScale(100), 70).strength(0.08))
 		.force("forceX", d3.forceX().x(d => d.forceX).strength(0.1))
 		// .force("center", d3.forceX().x(_ => xScale(50)).strength(0.02))
 		.force("forceY", d3.forceY().y(d => d.forceY).strength(0.01))
@@ -625,7 +627,7 @@
 	<div class="no-data-hint left-padding" class:hide={pollutantDataForCurrentYear}>
 		No data is available for the selected year {currentYear}. Go to <b>{firstYear}</b>
 	</div>
-	<svg bind:this={graph} on:wheel={handleWheel} class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
+	<svg bind:this={graph} use:startAnimation on:wheel={handleWheel} class="graph" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet">
 		<g transform="translate(100, 80)">		
 			{#if activeSourceGroupData}
 					{#if activeSourceGroupData.amount > 0}
