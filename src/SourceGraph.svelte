@@ -11,7 +11,7 @@
 	import SourceGraphSubSources from './SourceGraphSubSources.svelte'
 
 	let store = getContext("store")
-	let width = 700
+	export let width
 	let height = 700
 	
 	export let currentYear
@@ -28,7 +28,6 @@
 			firstYear = 0
 		}
 	}
-	
 	$: pollutantDataForCurrentYear = currentYear >= firstYear
 	
 	$: currentYearBased = pollutantDataForCurrentYear ? currentYear : firstYear
@@ -55,7 +54,7 @@
 	
 	$: sourceGroupCount = percentagePerSourceGroup.length ?? 0
 	// $: console.log({percentagePerSourceGroup, percentagePerSourceGroupCumulative})
-	let xScale = () => 0
+	// let xScale = () => 0
 	$: xScale = d3.scaleLinear().domain([0, 100]).range([0, width - 120])
 	$: colorScale = d3.scaleLinear()
 	.domain([0, sourceGroupCount / 2, sourceGroupCount - 1])
@@ -83,12 +82,12 @@
 	
 	$: sourceGroupDataTweened.set(sourceGroupsData)
 	
-	
+
 	$: {
 		sourceGroupsData = percentagePerSourceGroup.map(([name, percentage, amount], i) => {
-			let width = i != 0 ? xScale(percentage) > 1 ? xScale(percentage) - 1 : 1 : xScale(percentage)
+			let barWidth = i != 0 ? xScale(percentage) > 1 ? xScale(percentage) - 1 : 1 : xScale(percentage)
 			let leftX = i != 0 ? xScale(percentagePerSourceGroupCumulative[i][1]) + 1 : xScale(percentagePerSourceGroupCumulative[i][1])
-			let middleX = leftX + width / 2
+			let middleX = leftX + barWidth / 2
 			
 			
 			let bottom = i % 2 > 0 && false
@@ -96,7 +95,7 @@
 			
 			let oldPosition = sourceLabelPositions[i] ? sourceLabelPositions[i] : {
 				x: middleX,
-				y: 50
+				y: forceY
 			}
 			
 			sourceLabelPositions[i] = {
@@ -118,7 +117,7 @@
 				amount: amount,
 				index: i,
 				position: {
-					width: width,
+					width: barWidth,
 					x: leftX,
 					y: 100,
 					middle: middleX
@@ -152,9 +151,11 @@
 		sourceGroupsData
 		width
 		activeSourceGroup
+		
 		cancelAnimation()
 		labelSimulation.alpha(1)
 		startAnimation()
+		
 	}
 	function startAnimation() {
 		tickAnimation = window.requestAnimationFrame(tickSimulation)
@@ -176,25 +177,34 @@
 	}
 	
 	
-	function getBorderForce(x, width, middle, steepness = 10) {
+	function getBorderForce(x, width = 10, middle = 0, steepness = 10) {
+
 		let result = Math.pow(((x-middle)/(width/2)), steepness)
-		
 		return round(result, 3)
 	}
 	
-	$: labelSimulation = d3.forceSimulation()
+
+
+	function getForceSimulation(xScale) {
+		return d3.forceSimulation()
 		.force("boundary", forceBoundary(-30, -40, xScale(100), 70).strength(0.08))
 		.force("forceX", d3.forceX().x(d => d.forceX).strength(0.1))
-		// .force("center", d3.forceX().x(_ => xScale(50)).strength(0.02))
-		.force("forceY", d3.forceY().y(d => d.forceY).strength(0.01))
-		// .force('charge', d3.forceManyBody().strength(-20))
+		.force("forceY", d3.forceY().y(d => d.forceY).strength(0.008))
 		.force("collision", bboxCollide(d => {
 			let hw = d.width > 0 ? d.width / 2 : 0
 			return [[(hw) * -1, -14], [hw, 14]]
-		}).strength(.05))
-		// .force("edges", edgesCollision)
+		}).strength(.1))
+		.velocityDecay(0.65)
 		.nodes(sourceLabelPositions)
-
+	}
+	
+	let labelSimulation
+	$: {
+		sourceLabelPositions
+		width
+		labelSimulation = getForceSimulation(xScale)
+	}
+	
 	const labelRenames = {
 		"AgriLivestock": "Agricultural Livestock",
 		"AgriOther": "Agriculture",
@@ -376,10 +386,6 @@
 	}
 	
 	const link = d3.linkVertical()
-	
-	const scaleBand = d3.scaleBand()
-						.domain([0, 100])
-						.range([xScale(0), xScale(100)])
 	
 	function formatAmount(mathJsUnit) {
 		let number = mathJsUnit.toJSON()
@@ -586,7 +592,6 @@
 
 <div class="wrapper" id="sources"
 	class:deactivated={!pollutantDataForCurrentYear}
-	bind:clientWidth={width}
 >
 	<h3 class="left-padding">
 		<span class="year">

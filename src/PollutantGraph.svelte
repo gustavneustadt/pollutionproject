@@ -24,7 +24,7 @@
 	let subSourcesData = $store.subSources
 
 	
-	let width = 800
+	let width = null
 	const height = 600
 	
 	let initialized = false
@@ -305,6 +305,7 @@
 
 <div class="wrapper">
 	<div class="graph-wrapper" bind:clientWidth={width}>
+		{#if width}
 		<h2>Annual Air Emissions of Germany</h2>
 		<p class="hint">
 			{#if !activePollutant}
@@ -361,7 +362,13 @@
 		<h2>
 			Annual emission composition
 		</h2>
-		<SourceGraph bind:currentYear={currentYear} bind:currentActivePollutant={activePollutant} pollutantColorScale={colorScale}/>
+		<SourceGraph 
+			bind:currentYear={currentYear} 
+			bind:currentActivePollutant={activePollutant} 
+			pollutantColorScale={colorScale}
+			width={width}
+		/>
+	{/if}
 	</div>
 	
 	<PollutantInfoPanel currentYear={currentYear} currentActivePollutant={activePollutant} colorScale={colorScale}/>
